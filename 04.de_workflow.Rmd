@@ -1,0 +1,914 @@
+---
+title: "DE analysis"
+author: "Sergey Naumenko"
+date: "`r Sys.Date()`"
+output:
+   html_document:
+      code_folding: hide
+      df_print: paged
+      highlights: pygments
+      number_sections: true
+      self_contained: true
+      theme: default
+      toc: true
+      toc_float:
+         collapsed: true
+         smooth_scroll: true
+---
+
+# Overview
+- Principal Investigator: Beth Overmoyer
+- Experiment: RNAseq_analysis_of_inflammatory_breast_cancer_hbc04141
+- study 6 was excluded because if low read depth in 3373-3
+- https://www.bioconductor.org/packages/release/bioc/vignettes/DEGreport/inst/doc/DEGreport.html
+- [AnnotationHub](https://bioconductor.org/packages/release/bioc/html/AnnotationHub.html). We use ensembl version matching bcbio pipeline - v94.
+- [HBC materials](https://hbctraining.github.io/DGE_workshop_salmon/lessons/03_DGE_QC_analysis.html)
+- [HBC materials - functional analysis](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html)
+- http://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+
+```{r include = TRUE}
+## Setup
+### Bioconductor and CRAN libraries used
+
+library(DESeq2)
+library(tidyverse)
+library(RColorBrewer)
+library(pheatmap)
+library(DEGreport)
+library(tximport)
+library(ggplot2)
+library(ggrepel)
+library(knitr)
+library(AnnotationHub)
+library(ensembldb)
+
+ggplot2::theme_set(theme_light(base_size = 14))
+
+opts_chunk[["set"]](
+    cache = FALSE,
+    dev = c("png", "pdf"),
+    error = TRUE,
+    highlight = TRUE,
+    message = FALSE,
+    prompt = FALSE,
+    tidy = FALSE,
+    warning = FALSE)
+```
+```{r include = TRUE}
+# Have a folder called `data`, and copy your Salmon folders here from the cluster. 
+## List all directories containing data  
+### change the pattern to something specific to your Salmon folders
+samples <- list.files(path = "./data/final", 
+                      full.names = T,
+                      pattern = "^S")
+
+## Obtain a vector of all filenames including the path
+files <- file.path(samples, "salmon", "quant.sf")
+files
+
+## Since all quant files have the same name it is useful to have names for each element
+### change the string in str_replace so the pattern matches your filenames
+names(files) <- str_replace(samples, "./data/final/", "") 
+```
+
+```{r include = TRUE}
+# Load the data and metadata
+meta <- read_csv("tables/metadata_corrected.csv") %>% 
+  column_to_rownames(var = "samplename")
+protein_coding_genes <- read_csv("tables/ensembl_w_description.protein_coding.csv")
+```
+```{r include = TRUE}
+# Connect to AnnotationHub
+ah <- AnnotationHub()
+
+# Query AnnotationHub
+hs_ens <- query(ah, c("Homo sapiens", "EnsDb"))
+
+# Get Ensembl94 - used in bcbio
+hs_ens <- hs_ens[["AH64923"]]
+
+# Extract gene-level information
+txdb <- transcripts(hs_ens,
+                    return.type = "data.frame") %>% 
+  dplyr::select(tx_id, gene_id)  
+
+genedb <- genes(hs_ens, 
+                return.type = "data.frame") %>% 
+  dplyr::select(gene_id, gene_name, symbol)  
+
+gene_symbol <- genedb %>% dplyr::select(gene_id, symbol)
+
+hsdb <- inner_join(txdb, genedb)
+write.table(hsdb, 
+            file = "data/ensembl94_hg38_annotations.txt", 
+            sep = "\t", 
+            row.names = F, 
+            quote = F)
+```
+```{r include = TRUE}
+# Read in  a tx2gene file with transcript identifiers in the first column and gene identifiers in the second column
+#wormdb <- read.table("ensembl94_WBcel235_annotations.txt", sep="\t", header=T)
+tx2gene <- hsdb[, c("tx_id", "gene_id")]
+
+# Run tximport
+txi_file <- "data/txi.RDS"
+if (file.exists(txi_file)){
+    txi <- readRDS(txi_file)
+}else{
+    txi <- tximport(files, 
+                type = "salmon", 
+                tx2gene = tx2gene, 
+                countsFromAbundance = "lengthScaledTPM", 
+                ignoreTxVersion = FALSE)
+    saveRDS(txi, txi_file)
+}
+
+# Look at the counts
+class(txi)
+attributes(txi)
+txi$counts %>% View()
+```
+# Checking to see that the transcript to gene mapping is correct
+When you have annotations that are from a different source from your reference you can run into problems (i.e lose genes). Some checks you can do before proceeding:
+
+1. Look at the dimensions of your count matrix. Do you have ~20k genes present? `dim(txi$counts)`
+2. When running `tximport()` you will get a message in your console. If you see something like `transcripts missing from tx2gene` start troubleshooting.
+```{r}
+dim(txi$counts)
+```
+
+# Sanity check that metadata matches your expression
+It is always a good idea to check if:
+
+1. Do you have expression data for all samples listed in your metadata?
+2. Are the samples in your expression data in the same order as your metadata?
+```{r}
+### Check that sample names match in both files
+all(colnames(txi$counts) %in% rownames(meta))
+
+# Not the same? Make them the same
+### This will change depending on what names you have listed!
+#paste0(meta$samplename, "_", meta$library)
+#rownames(meta) <- paste0(meta$samplename, "_", meta$library)
+#meta$genotype <- relevel(meta$genotype, ref="Wildtype")
+
+### Check that sample names match in both files
+all(colnames(txi$counts) %in% rownames(meta))
+
+### Check that all samples are in the same order
+meta <- meta[colnames(txi$counts),]
+all(colnames(txi$counts) == rownames(meta))
+
+```
+
+# Run DESeq2
+```
+estimating size factors
+estimating dispersions
+gene-wise dispersion estimates
+mean-dispersion relationship
+final dispersion estimates
+fitting model and testing
+```
+
+* [Estimating size factors and count normalization](https://hbctraining.github.io/DGE_workshop_salmon/lessons/02_DGE_count_normalization.html)
+* [Gene-wise dispersions](https://hbctraining.github.io/DGE_workshop_salmon/lessons/04_DGE_DESeq2_analysis.html)
+* [Mean-dispersion(variance) relationship and the Negative Binomial Model](https://hbctraining.github.io/DGE_workshop_salmon/lessons/01_DGE_setup_and_overview.html#modeling-count-data)
+* [Model fitting and hypothesis testing](https://hbctraining.github.io/DGE_workshop_salmon/lessons/05_DGE_DESeq2_analysis2.html)
+
+
+# Wald test
+*Here we subset protein coding genes*.
+```{r include = TRUE}
+## Create DESeq2Dataset object
+dds_file <- "data/dds.RDS"
+meta$treatment <- as.factor(meta$treatment)
+meta$response <- as.factor(meta$response)
+meta$er <- as.factor(meta$er)
+meta$date_of <- as.factor(meta$date_of)
+meta$tumor_percentage <- as.factor(meta$tumor_percentage)
+meta$tumor_percentage_high <- as.factor(meta$tumor_percentage_high)
+
+non_responders <- meta %>% dplyr::filter(study_id %in% c(2, 19)) %>% row.names() 
+
+if (file.exists(dds_file)){
+    dds <- readRDS(dds_file)
+}else{
+    dds <- DESeqDataSetFromTximport(txi,
+                                colData = meta, 
+                                design = ~treatment)
+    
+    dds <- dds[,!colnames(dds) %in% non_responders]
+    design(dds) <- formula(~treatment + response + er + tumor_percentage_high + date_of)
+    
+    # subset protein-coding genes
+    pc_genes <- intersect(protein_coding_genes$ensembl_gene_id, row.names(dds))
+    dds <- dds[pc_genes,]
+    # 100 reads / 40 samples
+    keep <- rowSums(counts(dds)) >= 100
+    dds <- dds[keep,]
+
+    # Run DESeq2
+    dds <- DESeq(dds)
+    saveRDS(dds, dds_file)
+}
+```
+
+# DEGreport QC
+
+## Size factor QC - samples 1-15
+```{r fig.width=10, fig.height = 10}
+counts <- counts(dds, normalized = TRUE)
+design <- as.data.frame(colData(dds))
+degCheckFactors(counts[, 1:5])
+
+```
+
+## Size factor QC - samples 16-30
+```{r fig.width=10, fig.height = 10}
+degCheckFactors(counts[, 16:30])
+
+```
+
+## Size factor QC - samples 31-40
+```{r fig.width=10, fig.height = 10}
+degCheckFactors(counts[, 31:40])
+
+```
+
+# Mean-Variance QC plots
+
+## treatment
+```{r fig.width=15, fig.height = 15}
+res <- results(dds)
+degQC(counts, design[["treatment"]], pvalue = res[["pvalue"]])
+```
+
+## response
+```{r fig.width=15, fig.height = 15}
+degQC(counts, design[["response"]], pvalue = res[["pvalue"]])
+```
+
+## ER
+```{r fig.width=15, fig.height = 15}
+degQC(counts, design[["er"]], pvalue = res[["pvalue"]])
+```
+
+## tumor_percentage_high
+```{r fig.width=15, fig.height = 15}
+degQC(counts, design[["tumor_percentage_high"]], pvalue = res[["pvalue"]])
+```
+
+# Covariates effect on count data
+```{r}
+mdata <- colData(dds) %>%  as.data.frame()  %>% 
+  dplyr::select(treatment, response, er, date_of, tumor_percentage_high)
+resCov <- degCovariates(log2(counts(dds)+0.5), mdata)
+```
+
+```{r}
+mdata %>% ggplot(aes(tumor_percentage_high, fill = response)) + geom_bar(position = "dodge2")
+```
+
+# Covariates correlation with metrics
+```{r}
+cor <- degCorCov(mdata)
+```
+```{r}
+mdata %>% ggplot(aes(tumor_percentage_high, fill = treatment)) + geom_bar(position = "dodge2")
+```
+
+
+```{r}
+mdata %>% ggplot(aes(date_of, fill = response)) + geom_bar(position = "dodge2")
+```
+
+# Sample-level QC analysis 
+
+```{r include = TRUE}
+### Transform counts for data visualization (unsupervised analysis)
+rld_file <- "data/rld.RDS"
+if (file.exists(rld_file)){
+    rld <- readRDS(rld_file)
+}else{
+    rld <- rlog(dds, blind = TRUE)
+    saveRDS(rld, rld_file)
+}
+class(rld) # what type of object is this
+
+# we also need just a matrix of transformed counts
+rld_mat <- assay(rld)
+```
+
+## PCA - treatment
+```{r}
+# Use the DESeq2 function
+plotPCA(rld, intgroup = c("treatment"))
+```
+
+## PCA - response
+```{r}
+# Use the DESeq2 function
+plotPCA(rld, intgroup = c("response"))
+```
+
+## PCA - ER
+```{r}
+# Use the DESeq2 function
+plotPCA(rld, intgroup = c("er"))
+```
+
+## PCA - tumor_percentage
+```{r}
+# Use the DESeq2 function
+plotPCA(rld, intgroup = c("tumor_percentage"))
+```
+
+## PCA - tumor_percentage_high
+```{r}
+# Use the DESeq2 function
+plotPCA(rld, intgroup = c("tumor_percentage_high"))
+```
+
+## PCA - date_of
+```{r}
+# Use the DESeq2 function
+plotPCA(rld, intgroup = c("date_of"))
+```
+
+# Inter-correlation analysis
+
+## Without study_id
+
+```{r, fig.width = 20, fig.height = 20}
+# Correlation matrix
+rld_cor <- cor(rld_mat)
+
+meta$study_id <- as.factor(meta$study_id)
+# Create annotation file for samples
+annotation <- meta[, c("treatment", "response", "er", "tumor_percentage_high", "date_of")]
+
+# Change colors
+heat.colors <- brewer.pal(6, "Blues")
+
+# Plot heatmap
+pheatmap(rld_cor, 
+         annotation = annotation, 
+         border = NA,
+         fontsize = 20)
+```
+
+## With study_id
+
+```{r, fig.width = 20, fig.height = 20}
+# Correlation matrix
+rld_cor <- cor(rld_mat)
+
+meta$study_id <- as.factor(meta$study_id)
+# Create annotation file for samples
+annotation <- meta[, c("treatment", "response", "er", "tumor_percentage_high", "date_of", "study_id")]
+
+# Change colors
+heat.colors <- brewer.pal(6, "Blues")
+
+# Plot heatmap
+pheatmap(rld_cor, 
+         annotation = annotation, 
+         border = NA,
+         fontsize = 20)
+```
+
+# Treatment Post vs Pre - see Table3
+```{r}
+# Get results for treatment
+contrast <- c("treatment", "post", "pre")
+resTreatment <- results(dds, contrast = contrast, alpha = 0.05)
+length(which(resTreatment$padj < 0.05))
+
+# Add annotations
+resTreatment_tb <- resTreatment %>%
+  data.frame() %>% 
+  rownames_to_column(var = "gene") %>% 
+  as_tibble() %>% 
+  left_join(gene_symbol, by = c("gene" = "gene_id"))
+
+resTreatment_tb_significant <- dplyr::filter(resTreatment_tb, padj < 0.05)
+
+samples_pre <- meta %>% dplyr::filter(treatment == "pre") %>% row.names() 
+
+counts_pre <- txi$abundance %>% 
+  as.data.frame() %>% 
+  dplyr::select(one_of(samples_pre)) %>% 
+  rowMeans() %>% 
+  as.data.frame() %>% 
+  rownames_to_column(var = "ensembl_gene_id") 
+  
+colnames(counts_pre) <- c("ensembl_gene_id", "pre_expression_mean_tpm")
+
+samples_post <- meta %>% dplyr::filter(treatment == "post") %>% row.names() 
+
+counts_post <- txi$abundance %>% 
+        as.data.frame() %>% 
+        dplyr::select(one_of(samples_post)) %>%
+        rowMeans() %>% 
+        as.data.frame() %>% 
+        rownames_to_column(var = "ensembl_gene_id")
+colnames(counts_post) <- c("ensembl_gene_id", "post_expression_mean_tpm")
+
+counts_post <- counts_post %>% left_join(counts_pre, by = c("ensembl_gene_id" = "ensembl_gene_id"))
+
+resTreatment_tb_significant <- resTreatment_tb_significant %>% 
+          left_join(counts_post, by = c("gene" = "ensembl_gene_id"))
+
+write_csv(resTreatment_tb_significant, 
+          "tables/T3.DE_treatment.csv")
+
+# Separate into up and down-regulated gene sets
+sigTreatment_up <- rownames(resTreatment)[which(resTreatment$padj < 0.01 & resTreatment$log2FoldChange > 0)]
+sigTreatment_down <- rownames(resTreatment)[which(resTreatment$padj < 0.01 & resTreatment$log2FoldChange < 0)]
+```
+
+# Response Yes vs No - see Table4
+```{r}
+# Get results for rescue vs wt
+contrast <- c("response", "Yes", "No")
+resResponse <- results(dds, contrast = contrast, alpha = 0.05)
+length(which(resResponse$padj < 0.05))
+
+# Add annotations
+resResponse_tb <- resResponse %>%
+  data.frame() %>% 
+  rownames_to_column(var = "gene") %>% 
+  as_tibble() %>% 
+  left_join(gene_symbol, by = c("gene" = "gene_id")) 
+
+resResponse_tb_significant <- dplyr::filter(resResponse_tb, padj < 0.05)
+
+samples_no <- meta %>% dplyr::filter(response == "No") %>% row.names() 
+
+counts_no <- txi$abundance %>%
+                as.data.frame() %>% 
+                dplyr::select(any_of(samples_no)) %>% 
+                rowSums() %>% 
+                as.data.frame() %>% 
+                rownames_to_column(var = "ensembl_gene_id")
+colnames(counts_no) <- c("ensembl_gene_id", "no_expression_mean_tpm")
+
+samples_yes <- meta %>% dplyr::filter(response == "Yes") %>% row.names() 
+
+counts_yes <- txi$abundance %>% 
+                as.data.frame() %>% 
+                dplyr::select(any_of(samples_yes)) %>% 
+                rowSums() %>% 
+                as.data.frame() %>% 
+                rownames_to_column(var = "ensembl_gene_id")
+
+colnames(counts_yes) <- c("ensembl_gene_id", "yes_expression_mean_tpm")
+
+counts_yes <-counts_yes %>% 
+            left_join(counts_no, 
+                      by = c("ensembl_gene_id" = "ensembl_gene_id"))
+
+resResponse_tb_significant <- resResponse_tb_significant %>% 
+          left_join(counts_yes, by = c("gene" = "ensembl_gene_id"))
+
+
+write_csv(resResponse_tb_significant, 
+          "tables/T4.DE_response.csv")
+
+# Separate into up and down-regulated gene sets
+sigResponse_up <- rownames(resResponse)[which(resResponse$padj < 0.01 & resResponse$log2FoldChange > 0)]
+sigResponse_down <- rownames(resResponse)[which(resResponse$padj < 0.01 & resResponse$log2FoldChange < 0)]
+```
+
+# ER : Positive vs Negative - Table 5
+```{r}
+contrast <- c("er", "Positive", "Negative")
+resER <- results(dds, contrast = contrast, alpha = 0.05)
+length(which(resER$padj < 0.05))
+
+# Add annotations
+resER_tb <- resER %>%
+  data.frame() %>% 
+  rownames_to_column(var = "gene") %>% 
+  as_tibble() %>% 
+  left_join(gene_symbol, by = c("gene" = "gene_id")) 
+
+resER_tb_significant <- dplyr::filter(resER_tb, padj < 0.05)
+
+samples_pos <- meta %>% dplyr::filter(er == "Positive") %>% row.names() 
+
+counts_pos <- txi$abundance %>%
+                as.data.frame() %>% 
+                dplyr::select(any_of(samples_pos)) %>% 
+                rowMeans() %>% 
+                as.data.frame() %>% 
+                rownames_to_column(var = "ensembl_gene_id")
+colnames(counts_pos) <- c("ensembl_gene_id", "Positive_expression_mean_tpm")
+
+samples_neg <- meta %>% dplyr::filter(er == "Negative") %>% row.names() 
+
+counts_neg <- txi$abundance %>% 
+                as.data.frame() %>% 
+                dplyr::select(any_of(samples_neg)) %>% 
+                rowMeans() %>% 
+                as.data.frame() %>% 
+                rownames_to_column(var = "ensembl_gene_id")
+
+colnames(counts_neg) <- c("ensembl_gene_id", "Negative_expression_mean_tpm")
+
+counts_pos <-counts_pos %>%
+            left_join(counts_neg, 
+                      by = c("ensembl_gene_id" = "ensembl_gene_id"))
+
+resER_tb_significant <- resER_tb_significant %>%
+          left_join(counts_pos, by = c("gene" = "ensembl_gene_id"))
+
+
+write_csv(resER_tb_significant,
+          "tables/T5.DE_ER.csv")
+
+# Separate into up and down-regulated gene sets
+sigER_up <- rownames(resER)[which(resER$padj < 0.01 & resER$log2FoldChange > 0)]
+sigER_down <- rownames(resER)[which(resER$padj < 0.01 & resER$log2FoldChange < 0)]
+```
+
+# tumor_percentage_high : High vs Low - Table 6
+```{r}
+contrast <- c("tumor_percentage_high", "high", "low")
+resTP <- results(dds, contrast = contrast, alpha = 0.05)
+length(which(resTP$padj < 0.05))
+
+# Add annotations
+resTP_tb <- resTP %>%
+  data.frame() %>% 
+  rownames_to_column(var = "gene") %>% 
+  as_tibble() %>% 
+  left_join(gene_symbol, by = c("gene" = "gene_id")) 
+
+resTP_tb_significant <- dplyr::filter(resTP_tb, padj < 0.05)
+
+samples_high <- meta %>% dplyr::filter(tumor_percentage_high == "high") %>% row.names() 
+
+counts_high <- txi$abundance %>%
+                as.data.frame() %>% 
+                dplyr::select(any_of(samples_high)) %>% 
+                rowMeans() %>% 
+                as.data.frame() %>% 
+                rownames_to_column(var = "ensembl_gene_id")
+colnames(counts_high) <- c("ensembl_gene_id", "High_expression_mean_tpm")
+
+samples_low <- meta %>% dplyr::filter(tumor_percentage_high == "low") %>% row.names() 
+
+counts_low <- txi$abundance %>% 
+                as.data.frame() %>% 
+                dplyr::select(any_of(samples_low)) %>% 
+                rowMeans() %>% 
+                as.data.frame() %>% 
+                rownames_to_column(var = "ensembl_gene_id")
+
+colnames(counts_low) <- c("ensembl_gene_id", "Low_expression_mean_tpm")
+
+counts_high <-counts_high %>%
+            left_join(counts_low, 
+                      by = c("ensembl_gene_id" = "ensembl_gene_id"))
+
+resTP_tb_significant <- resTP_tb_significant %>%
+          left_join(counts_high, by = c("gene" = "ensembl_gene_id"))
+
+
+write_csv(resTP_tb_significant,
+          "tables/T6.DE_tumor_percentage_high.csv")
+
+# Separate into up and down-regulated gene sets
+sigTP_up <- rownames(resTP)[which(resTP$padj < 0.01 & resTP$log2FoldChange > 0)]
+sigTP_down <- rownames(resTP)[which(resTP$padj < 0.01 & resTP$log2FoldChange < 0)]
+```
+
+
+# date_of: 20180323 vs 20180228 - Table 7
+```{r}
+contrast <- c("date_of", "20180323", "20180228")
+resDO <- results(dds, contrast = contrast, alpha = 0.05)
+length(which(resDO$padj < 0.05))
+
+# Add annotations
+resDO_tb <- resDO %>%
+  data.frame() %>% 
+  rownames_to_column(var = "gene") %>% 
+  as_tibble() %>% 
+  left_join(gene_symbol, by = c("gene" = "gene_id")) 
+
+resDO_tb_significant <- dplyr::filter(resDO_tb, padj < 0.05)
+
+samples_23 <- meta %>% dplyr::filter(date_of == "20180323") %>% row.names() 
+
+counts_23 <- txi$abundance %>%
+                as.data.frame() %>% 
+                dplyr::select(any_of(samples_23)) %>% 
+                rowMeans() %>% 
+                as.data.frame() %>% 
+                rownames_to_column(var = "ensembl_gene_id")
+colnames(counts_23) <- c("ensembl_gene_id", "20180323_expression_mean_tpm")
+
+samples_28 <- meta %>% dplyr::filter(date_of == "20180228") %>% row.names() 
+
+counts_28 <- txi$abundance %>% 
+                as.data.frame() %>% 
+                dplyr::select(any_of(samples_28)) %>% 
+                rowMeans() %>% 
+                as.data.frame() %>% 
+                rownames_to_column(var = "ensembl_gene_id")
+
+colnames(counts_28) <- c("ensembl_gene_id", "20180228_expression_mean_tpm")
+
+counts_23 <-counts_23 %>%
+            left_join(counts_28, 
+                      by = c("ensembl_gene_id" = "ensembl_gene_id"))
+
+resDO_tb_significant <- resDO_tb_significant %>%
+          left_join(counts_23, by = c("gene" = "ensembl_gene_id"))
+
+
+write_csv(resDO_tb_significant,
+          "tables/T7.DE_dete_of.csv")
+
+# Separate into up and down-regulated gene sets
+sigDO_up <- rownames(resDO)[which(resDO$padj < 0.01 & resDO$log2FoldChange > 0)]
+sigDO_down <- rownames(resDO)[which(resDO$padj < 0.01 & resDO$log2FoldChange < 0)]
+```
+
+# Visualization
+
+*Gene example*
+
+```{r}
+d <- plotCounts(dds, 
+                gene = "ENSG00000130234", 
+                intgroup = "treatment", 
+                returnData = TRUE)
+
+ggplot(d, aes(x = treatment, y = count, color = treatment)) + 
+     geom_point(position = position_jitter(w = 0.1, h = 0)) +
+     geom_text_repel(aes(label = rownames(d))) + 
+     theme_bw(base_size = 10) +
+     ggtitle("ACE2") +
+     theme(plot.title = element_text(hjust = 0.5)) +
+     scale_y_log10()
+     
+```
+
+
+```{r, fig.width = 10, fig.height = 10}
+# Add a column for significant genes
+resTreatment_tb <- resTreatment_tb %>% mutate(threshold = padj < 0.01)
+
+## Volcano plot
+ggplot(resTreatment_tb) +
+  geom_point(aes(x = log2FoldChange, y = -log10(padj), colour = threshold)) +
+  ggtitle("Treatment Post vs Pre") +
+  xlab("log2 fold change") + 
+  ylab("-log10 adjusted p-value") +
+  scale_x_continuous(limits = c(-10,10)) +
+  theme(legend.position = "none",
+        plot.title = element_text(size = rel(1.5), hjust = 0.5),
+        axis.title = element_text(size = rel(1.25)))
+```
+
+```{r}
+# Add a column for significant genes
+resResponse_tb <- resResponse_tb %>% mutate(threshold = padj < 0.01)
+
+ggplot(resResponse_tb) +
+  geom_point(aes(x = log2FoldChange, y = -log10(padj), colour = threshold)) +
+  ggtitle("Response Yes vs No") +
+  xlab("log2 fold change") + 
+  ylab("-log10 adjusted p-value") +
+  scale_x_continuous(limits = c(-10,10)) +
+  scale_y_continuous(limits = c(0, 7.5))+
+  theme(legend.position = "none",
+        plot.title = element_text(size = rel(1.5), hjust = 0.5),
+        axis.title = element_text(size = rel(1.25)))
+```
+
+```{r}
+# Add a column for significant genes
+resER_tb <- resER_tb %>% mutate(threshold = padj < 0.01)
+
+ggplot(resER_tb) +
+  geom_point(aes(x = log2FoldChange, y = -log10(padj), colour = threshold)) +
+  ggtitle("ER: Positive vs Negative") +
+  xlab("log2 fold change") + 
+  ylab("-log10 adjusted p-value") +
+  scale_x_continuous(limits = c(-10,10)) +
+  theme(legend.position = "none",
+        plot.title = element_text(size = rel(1.5), hjust = 0.5),
+        axis.title = element_text(size = rel(1.25)))
+```
+
+```{r}
+# Add a column for significant genes
+resTP_tb <- resTP_tb %>% mutate(threshold = padj < 0.01)
+
+ggplot(resTP_tb) +
+  geom_point(aes(x = log2FoldChange, y = -log10(padj), colour = threshold)) +
+  ggtitle("Tumor_percentage_high: High vs Low") +
+  xlab("log2 fold change") + 
+  ylab("-log10 adjusted p-value") +
+  scale_x_continuous(limits = c(-10,10)) +
+  theme(legend.position = "none",
+        plot.title = element_text(size = rel(1.5), hjust = 0.5),
+        axis.title = element_text(size = rel(1.25)))
+```
+
+```{r}
+# Add a column for significant genes
+resDO_tb <- resDO_tb %>% mutate(threshold = padj < 0.01)
+
+ggplot(resDO_tb) +
+  geom_point(aes(x = log2FoldChange, y = -log10(padj), colour = threshold)) +
+  ggtitle("Dafe of: 20180323 vs 20180228") +
+  xlab("log2 fold change") + 
+  ylab("-log10 adjusted p-value") +
+  scale_x_continuous(limits = c(-10,10)) +
+  theme(legend.position = "none",
+        plot.title = element_text(size = rel(1.5), hjust = 0.5),
+        axis.title = element_text(size = rel(1.25)))
+```
+# Heatmaps
+
+```{r, fig.width = 20, fig.height = 30}
+# Create a matrix of normalized expression
+sig_up <- resTreatment_tb_significant %>% arrange(-log2FoldChange) %>% head(50) %>% pull(gene)
+sig_down <- resTreatment_tb_significant %>% arrange(log2FoldChange) %>% head(50) %>% pull(gene)
+sig <- c(sig_up, sig_down)
+
+row_annotation <- gene_symbol %>% 
+                    as_tibble() %>% 
+                    dplyr::filter(gene_id %in% sig)
+
+plotmat <- txi$abundance[c(sig_up, sig_down),] %>% as.data.frame() %>% 
+          rownames_to_column(var = "ensembl_gene_id") %>% 
+          left_join(gene_symbol, by = c("ensembl_gene_id" = "gene_id")) %>% 
+          drop_na(symbol)
+
+plotmat$ensembl_gene_id <- NULL
+
+plotmat <- plotmat %>% column_to_rownames(var = "symbol") %>% as.matrix()
+
+# Color palette
+heat.colors <- brewer.pal(6, "YlOrRd")
+
+# Plot heatmap
+# color = heat.colors,
+pheatmap(plotmat, scale = "row", 
+         show_rownames = TRUE,
+         border = FALSE,
+         annotation = meta[, c("treatment"), drop = FALSE],
+         main = "Top 50 Up- and Down- regulated genes in treatment: post vs pre",
+         fontsize = 20)
+
+```
+
+
+```{r, fig.width = 20, fig.height = 30}
+# Create a matrix of normalized expression
+sig_up <- resResponse_tb_significant %>% arrange(-log2FoldChange) %>% head(50) %>% pull(gene)
+sig_down <- resResponse_tb_significant %>% arrange(log2FoldChange) %>% head(50) %>% pull(gene)
+sig <- c(sig_up, sig_down)
+
+row_annotation <- gene_symbol %>% 
+                    as_tibble() %>% 
+                    dplyr::filter(gene_id %in% sig)
+
+plotmat <- txi$abundance[c(sig_up, sig_down),] %>% as.data.frame() %>% 
+          rownames_to_column(var = "ensembl_gene_id") %>% 
+          left_join(gene_symbol, by = c("ensembl_gene_id" = "gene_id")) %>% 
+          drop_na(symbol)
+
+plotmat$ensembl_gene_id <- NULL
+
+plotmat <- plotmat %>% column_to_rownames(var = "symbol") %>% as.matrix()
+
+# Color palette
+heat.colors <- brewer.pal(6, "YlOrRd")
+
+# Plot heatmap
+pheatmap(plotmat, 
+         scale = "row", 
+         show_rownames = TRUE,
+         border = FALSE,
+         annotation = meta[, c("response"), drop = FALSE],
+         main = "Top 50 Up- and Down- regulated genes in Response: Yes vs No",
+         fontsize = 20)
+
+```
+
+```{r, fig.width = 20, fig.height = 30}
+# Create a matrix of normalized expression
+sig_up <- resER_tb_significant %>% arrange(-log2FoldChange) %>% head(50) %>% pull(gene)
+sig_down <- resER_tb_significant %>% arrange(log2FoldChange) %>% head(50) %>% pull(gene)
+sig <- c(sig_up, sig_down)
+
+row_annotation <- gene_symbol %>% 
+                    as_tibble() %>% 
+                    dplyr::filter(gene_id %in% sig)
+
+plotmat <- txi$abundance[c(sig_up, sig_down),] %>% as.data.frame() %>% 
+          rownames_to_column(var = "ensembl_gene_id") %>% 
+          left_join(gene_symbol, by = c("ensembl_gene_id" = "gene_id")) %>% 
+          drop_na(symbol)
+
+plotmat$ensembl_gene_id <- NULL
+
+plotmat <- plotmat %>% column_to_rownames(var = "symbol") %>% as.matrix()
+
+# Color palette
+heat.colors <- brewer.pal(6, "YlOrRd")
+
+# Plot heatmap
+pheatmap(plotmat, 
+         scale = "row", 
+         show_rownames = TRUE,
+         border = FALSE,
+         annotation = meta[, c("er"), drop = FALSE],
+         main = "Top 50 Up- and Down- regulated genes in ER: positive vs negative",
+         fontsize = 20)
+
+```
+
+
+
+```{r, fig.width = 20, fig.height = 10}
+# Create a matrix of normalized expression
+sig_up <- resTP_tb_significant %>% arrange(-log2FoldChange) %>% head(50) %>% pull(gene)
+sig_down <- resTP_tb_significant %>% arrange(log2FoldChange) %>% head(50) %>% pull(gene)
+sig <- c(sig_up, sig_down)
+
+row_annotation <- gene_symbol %>% 
+                    as_tibble() %>% 
+                    dplyr::filter(gene_id %in% sig)
+
+plotmat <- txi$abundance[c(sig_up, sig_down),] %>% as.data.frame() %>% 
+          rownames_to_column(var = "ensembl_gene_id") %>% 
+          left_join(gene_symbol, by = c("ensembl_gene_id" = "gene_id")) %>% 
+          drop_na(symbol)
+
+plotmat$ensembl_gene_id <- NULL
+
+plotmat <- plotmat %>% column_to_rownames(var = "symbol") %>% as.matrix()
+
+# Color palette
+heat.colors <- brewer.pal(6, "YlOrRd")
+
+# Plot heatmap
+pheatmap(plotmat, 
+         scale = "row", 
+         show_rownames = TRUE,
+         border = FALSE,
+         annotation = meta[, c("tumor_percentage_high"), drop = FALSE],
+         main = "Top Up/Down-regulated genes in Tumor_percentage_high: high vs low",
+         fontsize = 20)
+
+```
+
+
+```{r, fig.width = 20, fig.height = 30}
+# Create a matrix of normalized expression
+sig_up <- resDO_tb_significant %>% arrange(-log2FoldChange) %>% head(50) %>% pull(gene)
+sig_down <- resDO_tb_significant %>% arrange(log2FoldChange) %>% head(50) %>% pull(gene)
+sig <- c(sig_up, sig_down)
+
+row_annotation <- gene_symbol %>% 
+                    as_tibble() %>% 
+                    dplyr::filter(gene_id %in% sig)
+
+plotmat <- txi$abundance[c(sig_up, sig_down),] %>% as.data.frame() %>% 
+          rownames_to_column(var = "ensembl_gene_id") %>% 
+          left_join(gene_symbol, by = c("ensembl_gene_id" = "gene_id")) %>% 
+          drop_na(symbol)
+
+plotmat$ensembl_gene_id <- NULL
+
+plotmat <- plotmat %>% column_to_rownames(var = "symbol") %>% as.matrix()
+
+# Color palette
+heat.colors <- brewer.pal(6, "YlOrRd")
+
+# Plot heatmap
+pheatmap(plotmat, 
+         scale = "row", 
+         show_rownames = TRUE,
+         border = FALSE,
+         annotation = meta[, c("response"), drop = FALSE],
+         main = "Top 50 Up- and Down- regulated genes in date_of: 20180323 vs 20180228",
+         fontsize = 20)
+
+```
+
+
+# R session
+
+```{r}
+sessionInfo()
+```

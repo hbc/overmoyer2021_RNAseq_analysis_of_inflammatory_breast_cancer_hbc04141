@@ -1,0 +1,93 @@
+# Functional analysis = see Table 8, 9, 10, 11
+```{r}
+# Load library
+library(org.Hs.eg.db)
+library(clusterProfiler)
+
+## Create background dataset for hypergeometric testing using all genes tested for significance in the results                 
+bg_genes <- resTreatment_tb$gene
+
+## Run GO enrichment analysis 
+compGO <- enrichGO(gene = sigTreatment_up,
+                            universe = bg_genes,
+                            keyType = "ENSEMBL",
+                            OrgDb = "org.Hs.eg.db", 
+                            ont = "BP", 
+                            qvalueCutoff  = 0.05, 
+                            pAdjustMethod = "BH")
+
+#dotplot(compGO,
+#        showCategory = 20, 
+#        title = "GO (Biological Process) Enrichment Analysis for UP in Treatment (POST)")
+# image pdf 12 x 12
+
+## Output results from GO analysis to a table
+summary <- data.frame(compGO@result)
+write_csv(summary, "tables/T8.go.treatment_up.csv")
+```
+
+
+```{r}
+## Run GO enrichment analysis 
+compGO <- enrichGO(gene = sigTreatment_down,
+                            universe = bg_genes,
+                            keyType = "ENSEMBL",
+                            OrgDb = org.Hs.eg.db, 
+                            ont = "BP", 
+                            qvalueCutoff  = 0.05, 
+                            pAdjustMethod = "BH")
+
+#dotplot(compGO, showCategory = 25, title = "GO (Biological Process) Enrichment Analysis for DOWN in Treatment")
+# image pdf 12 x 12
+
+## Output results from GO analysis to a table
+summary <- data.frame(compGO@result)
+write_csv(summary, "tables/T9.go.treatment_down.csv")
+
+```
+
+
+```{r}
+bg_genes <- resResponse_tb$gene
+
+## Run GO enrichment analysis 
+compGO <- enrichGO(gene = sigResponse_up,
+                            universe = bg_genes,
+                            keyType = "ENSEMBL",
+                            OrgDb = "org.Hs.eg.db", 
+                            ont = "BP", 
+                            qvalueCutoff  = 0.05, 
+                            pAdjustMethod = "BH")
+
+#dotplot(compGO,
+#        showCategory = 20, 
+#        title = "GO (Biological Process) Enrichment Analysis for UP in Treatment (POST)")
+# image pdf 12 x 12
+
+## Output results from GO analysis to a table
+summary <- data.frame(compGO@result)
+write_csv(summary, "tables/T10.go.response_up.csv")
+```
+
+
+```{r}
+bg_genes <- resResponse_tb$gene
+
+## Run GO enrichment analysis 
+compGO <- enrichGO(gene = sigResponse_down,
+                            universe = bg_genes,
+                            keyType = "ENSEMBL",
+                            OrgDb = "org.Hs.eg.db", 
+                            ont = "BP", 
+                            qvalueCutoff  = 0.05, 
+                            pAdjustMethod = "BH")
+
+#dotplot(compGO,
+#        showCategory = 20, 
+#        title = "GO (Biological Process) Enrichment Analysis for UP in Treatment (POST)")
+# image pdf 12 x 12
+
+## Output results from GO analysis to a table
+summary <- data.frame(compGO@result)
+write_csv(summary, "tables/T11.go.response_down.csv")
+```
