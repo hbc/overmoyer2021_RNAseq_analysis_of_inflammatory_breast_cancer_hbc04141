@@ -17,7 +17,6 @@ output:
 ---
 
 # Overview
-
 - Principal Investigator: Beth Overmoyer
 - Experiment: RNAseq_analysis_of_inflammatory_breast_cancer_hbc04141
 - study 6 was excluded
@@ -28,6 +27,10 @@ library(knitr)
 library(DESeq2)
 library(DEGreport)
 library(ggrepel)
+library(pROC)
+library(randomForest)
+#devtools::install_github("sachsmc/plotROC")
+#library(plotROC)
 
 ggplot2::theme_set(theme_light(base_size = 14))
 
@@ -358,12 +361,12 @@ vst <- vst(raw_counts)
 
 pca <- degPCA(vst, colData(se_pre), condition = "response", name = "sample", data = T)[["plot"]]
 pca_labels <- pca[["labels"]]
-pca_data <- pca[["data"]] %>% as_tibble() %>%
+pca_data_pre <- pca[["data"]] %>% as_tibble() %>%
     dplyr::select(sample, PC1, PC2, response)
 
-pca_data$response <- as.factor(pca_data$response)
+pca_data_pre$response <- as.factor(pca_data_pre$response)
 
-pca_data %>%
+pca_data_pre %>%
     ggplot(aes(x = PC1, y = PC2, color = response, label = sample)) + 
     geom_point(size = 5) + 
     geom_text_repel(size = 10) + 
@@ -377,10 +380,26 @@ pca_data %>%
 
 ```
 
+## PRE - ROC
+```{r}
+#pca_data$PC2
+#pca_data$response
+roc_pre <- roc(pca_data_pre$response, pca_data_pre$PC2, percent = FALSE)
+ggroc(roc_pre, 
+      colour = "red", linetype = 2, size = 1, legacy.axes = TRUE)+
+    theme_minimal() + 
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab("100% - specificity : False Positive Percentage") +
+  ylab("Sensitivity : True Postive Percentage") + 
+  ggtitle(paste0("PRE AUC : ", round(roc_pre$auc, 2)))
+```
+
+
 ## POST
 ```{r pca_post, fig.width = 20, fig.height = 20}
-se_pre <- se[,se$treatment == "post"]
-raw_counts <- assays(se_pre)[["raw"]] %>% 
+se_post <- se[,se$treatment == "post"]
+raw_counts <- assays(se_post)[["raw"]] %>% 
     as_tibble(rownames = "ensembl_gene_id") %>% 
     dplyr::filter(ensembl_gene_id %in% protein_coding_genes$ensembl_gene_id) %>% 
     column_to_rownames(var = "ensembl_gene_id") %>% 
@@ -389,14 +408,14 @@ raw_counts <- assays(se_pre)[["raw"]] %>%
 
 vst <- vst(raw_counts) 
 
-pca <- degPCA(vst, colData(se_pre), condition = "response", name = "sample", data = T)[["plot"]]
-pca_labels <- pca[["labels"]]
-pca_data <- pca[["data"]] %>% as_tibble() %>%
+pca_post <- degPCA(vst, colData(se_post), condition = "response", name = "sample", data = T)[["plot"]]
+pca_labels <- pca_post[["labels"]]
+pca_data_post <- pca_post[["data"]] %>% as_tibble() %>%
     dplyr::select(sample, PC1, PC2, response)
 
-pca_data$response <- as.factor(pca_data$response)
+pca_data_post$response <- as.factor(pca_data_post$response)
 
-pca_data %>%
+pca_data_post %>%
     ggplot(aes(x = PC1, y = PC2, color = response, label = sample)) + 
     geom_point(size = 5) + 
     geom_text_repel(size = 15) + 
@@ -410,8 +429,30 @@ pca_data %>%
 
 ```
 
+## POST - ROC
+```{r}
+#pca_data_post$PC2
+#pca_data_post$response
+# https://sachsmc.github.io/plotROC/
+roc_post <- roc(pca_data_post$response, pca_data_post$PC2, percent = FALSE)
+
+pROC::ggroc(list(pre = roc_pre,
+           post = roc_post),
+           legacy.axes = TRUE, size = 1, linetype = 2) +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab("100% - specificity : False Positive Percentage") +
+  ylab("Sensitivity : True Postive Percentage") + 
+  theme_bw() +
+  ggtitle(paste0("PRE AUC:", round(roc_pre$auc, 2), " POST AUC : ", round(roc_post$auc, 2))) +
+  guides(color = guide_legend(title="Treatment"))
+
+ 
+```
+
 # R session
 
 ```{r}
 sessionInfo()
 ```
+
