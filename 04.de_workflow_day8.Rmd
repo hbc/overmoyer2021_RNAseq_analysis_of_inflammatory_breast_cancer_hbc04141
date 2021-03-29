@@ -790,6 +790,28 @@ pheatmap(plotmat,
 ```
 
 
+```{r}
+#  prepares an expression profile for GSEA
+#  http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#Expression_Data_Formats
+#  for GSEA it is important to report all genes - genome wide
+#  hopefully cpms are better than logcpms
+counts <- counts[rowSums(counts)>0,]
+result_file <-  paste0("tables/8day.4gsea.txt")
+
+counts_gsea <- counts %>% as.data.frame() %>% 
+    rownames_to_column(var = "ensembl_gene_id") %>% 
+    left_join(gene_symbol, by = c("ensembl_gene_id" = "gene_id")) %>% 
+    dplyr::relocate(symbol)
+
+colnames(counts_gsea)[1:2] = c("NAME", "DESCRIPTION")
+
+d <-duplicated(counts_gsea$NAME)
+o <-  order(rowSums(counts_gsea[,rownames(meta)]),decreasing = T)
+counts_gsea <- counts_gsea[o, ]
+counts_gsea <- counts_gsea[!d, ]
+write_tsv(counts_gsea, result_file)
+```
+
 # R session
 
 ```{r}
