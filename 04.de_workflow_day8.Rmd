@@ -3,17 +3,19 @@ title: "DE analysis - Day8"
 author: "Sergey Naumenko"
 date: "`r Sys.Date()`"
 output:
-   html_document:
-      code_folding: hide
-      df_print: paged
-      highlights: pygments
-      number_sections: true
-      self_contained: true
-      theme: default
-      toc: true
-      toc_float:
-         collapsed: true
-         smooth_scroll: true
+  pdf_document:
+    toc: yes
+  html_document:
+    code_folding: hide
+    df_print: paged
+    highlights: pygments
+    number_sections: yes
+    self_contained: yes
+    theme: default
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
 ---
 
 # Overview
@@ -802,13 +804,22 @@ counts_gsea <- counts %>% as.data.frame() %>%
     rownames_to_column(var = "ensembl_gene_id") %>% 
     left_join(gene_symbol, by = c("ensembl_gene_id" = "gene_id")) %>% 
     dplyr::relocate(symbol)
+#%>% 
+#    dplyr::relocate(ensembl_gene_id)
 
-colnames(counts_gsea)[1:2] = c("NAME", "DESCRIPTION")
+colnames(counts_gsea)[1:2] <- c("NAME", "DESCRIPTION")
 
 d <-duplicated(counts_gsea$NAME)
 o <-  order(rowSums(counts_gsea[,rownames(meta)]),decreasing = T)
 counts_gsea <- counts_gsea[o, ]
 counts_gsea <- counts_gsea[!d, ]
+
+
+samples_yes <- meta %>% dplyr::filter(response == "Yes") %>% row.names()
+samples_no <- meta %>% dplyr::filter(response == "No") %>% row.names()
+
+counts_gsea <- counts_gsea[,c("NAME", "DESCRIPTION", samples_yes, samples_no)]
+# gsea now supports ENSEMBL_IDs
 write_tsv(counts_gsea, result_file)
 ```
 
