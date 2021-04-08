@@ -360,6 +360,40 @@ pheatmap(rld_cor,
          fontsize = 20)
 ```
 
+## Wihout study_id = top 1000 variable genes
+```{r, fig.width = 20, fig.height = 20}
+rv <- rowVars(rld_mat)
+rv <- order(rv, decreasing = TRUE) %>% head(1000)
+rld_mat_1000 <- rld_mat[rv,]
+annotation <- meta[, c("treatment", "response", "er", "tumor_percentage_high", "date_of")]
+
+# Change colors
+heat.colors <- brewer.pal(6, "Blues")
+rld_cor <- cor(rld_mat_1000)
+# Plot heatmap
+pheatmap(rld_cor, 
+         annotation = annotation, 
+         border = NA,
+         fontsize = 20)
+```
+
+## Wihout study_id = top 500 variable genes
+```{r, fig.width = 20, fig.height = 20}
+rv <- rowVars(rld_mat)
+rv <- order(rv, decreasing = TRUE) %>% head(500)
+rld_mat_500 <- rld_mat[rv,]
+annotation <- meta[, c("treatment", "response", "er", "tumor_percentage_high", "date_of")]
+
+# Change colors
+heat.colors <- brewer.pal(6, "Blues")
+rld_cor <- cor(rld_mat_500)
+# Plot heatmap
+pheatmap(rld_cor, 
+         annotation = annotation, 
+         border = NA,
+         fontsize = 20)
+```
+
 ## With study_id
 
 ```{r, fig.width = 20, fig.height = 20}
