@@ -3,6 +3,8 @@ title: "DE analysis - Day1"
 author: "Sergey Naumenko"
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     code_folding: hide
     df_print: paged
@@ -14,8 +16,6 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: yes
-  pdf_document:
-    toc: yes
 ---
 
 # Overview
@@ -595,18 +595,30 @@ ggplot(d, aes(x = response, y = count)) +
 
 ```{r}
 # Add a column for significant genes
-resResponse_tb <- resResponse_tb %>% mutate(threshold = padj < 0.01)
+resResponse_tb_vis <- resResponse_tb %>% mutate(threshold = padj < 0.01)
 
-ggplot(resResponse_tb) +
+resResponse_tb_vis$symbol <- ifelse((abs(resResponse_tb_vis$log2FoldChange) > 1.5),   
+                                resResponse_tb_vis$symbol, NA) 
+
+resResponse_tb_vis$symbol <- ifelse(resResponse_tb_vis$threshold,   
+                                    resResponse_tb_vis$symbol, NA) 
+
+ggplot(resResponse_tb_vis,
+       aes(log2FoldChange, -log10(padj), label = symbol)) +
   geom_point(aes(x = log2FoldChange, y = -log10(padj), colour = threshold)) +
   ggtitle("Response Yes vs No") +
   xlab("log2 fold change") + 
   ylab("-log10 adjusted p-value") +
   scale_x_continuous(limits = c(-10,10)) +
-  scale_y_continuous(limits = c(0, 7.5))+
+  scale_y_continuous(limits = c(0, 5))+
   theme(legend.position = "none",
         plot.title = element_text(size = rel(1.5), hjust = 0.5),
-        axis.title = element_text(size = rel(1.25)))
+        axis.title = element_text(size = rel(1.25)),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank()) +
+  geom_text_repel(aes(label = symbol))
 ```
 
 ```{r}
