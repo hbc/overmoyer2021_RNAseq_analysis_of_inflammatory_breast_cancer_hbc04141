@@ -1,8 +1,8 @@
 samplename,treatment,study_id,response,er,tumor_percentage,date_of,category,tumor_percentage_high
 S3154-2,pre,1,Yes,Positive,"30-100",20180228,pre,high
 S3169-2,post,1,Yes,Positive,"30-100",20180228,post,high
-S3190-4,pre,2,NA,Positive,"30-100",20180323,pre,high
-S3194-3,post,2,NA,Positive,"1-29",20180228,post,low
+S3190-4,pre,2,No,Positive,"30-100",20180323,pre,high
+S3194-3,post,2,No,Positive,"1-29",20180228,post,low
 S3188-2,pre,3,No,Positive,"1-29",20180323,pre,low
 S3193-1,post,3,No,Positive,"1-29",20180323,post,low
 S3220-1,pre,4,Yes,Positive,"30-100",20180228,pre,high
@@ -33,8 +33,8 @@ S3822-1,pre,17,Yes,Negative,"30-100",20180228,pre,high
 S3837-2,post,17,Yes,Negative,"1-29",20180228,post,low
 S4047-1,pre,18,No,Positive,"30-100",20180228,pre,high
 S4056-1,post,18,No,Positive,"1-29",20180228,post,low
-S4089-1,pre,19,NA,Negative,"30-100",20180301,pre,high
-S4101-3,post,19,NA,Negative,"1-29",20180301,post,low
+S4089-1,pre,19,No,Negative,"30-100",20180301,pre,high
+S4101-3,post,19,No,Negative,"1-29",20180301,post,low
 S4136-1,pre,20,No,Negative,"1-29",20180301,pre,low
 S4144-2,post,20,No,Negative,"<1",20180323,post,low
 S4172-1,pre,21,No,Positive,"30-100",20180301,pre,high

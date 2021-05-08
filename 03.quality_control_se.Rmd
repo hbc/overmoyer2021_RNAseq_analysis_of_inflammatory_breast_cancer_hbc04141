@@ -23,7 +23,7 @@ output:
 - Experiment: RNAseq_analysis_of_inflammatory_breast_cancer_hbc04141
 - study 6 was excluded
 
-```{r, cache = FALSE, message = FALSE}
+```{r, cache = FALSE, message = FALSE, include = FALSE}
 library(tidyverse)
 library(knitr)
 library(DESeq2)
@@ -49,7 +49,18 @@ opts_chunk[["set"]](
 
 # Metadata
 ```{r  show-metadata, rows.print = 46}
-se <- readRDS("data/bcbio-se.rds")
+se <- readRDS("data/bcbio-se_all_samples.rds")
+se <- se[, se$study_id != 6]
+mdata <- colData(se) 
+mdata <- subset(mdata, subset = study_id != 6)
+mdata$response <- str_replace(mdata$response, "Yes", "pCR")
+mdata$response <- str_replace(mdata$response, "No", "non-pCR")
+mdata$response <- replace_na(mdata$response, "non-pCR")
+colData(se) <- mdata
+
+mdata <- metadata(se)
+mdata$metrics <- mdata$metrics %>% dplyr::filter(!sample %in% c("s3370_1", "s3373_3"))
+metadata(se) <- mdata
 
 metadata <- colData(se) %>% 
     as_tibble(rownames = NULL) %>% 
@@ -62,6 +73,8 @@ metrics$date_of <- as_factor(metrics$date_of)
 
 metadata
 ```
+
+\newpage
 
 # Read metrics {.tabset}
 
@@ -347,6 +360,9 @@ pca_data %>%
 
 ```
 
+
+\newpage
+
 # PCA - protein coding genes - PRE/POST - Responce
 
 ## PRE
@@ -382,6 +398,8 @@ pca_data_pre %>%
 
 ```
 
+\newpage
+
 ## PRE - ROC
 ```{r}
 #pca_data$PC2
@@ -397,6 +415,9 @@ ggroc(roc_pre,
   ggtitle(paste0("PRE AUC : ", round(roc_pre$auc, 2)))
 ```
 
+
+
+\newpage
 
 ## POST
 ```{r pca_post, fig.width = 20, fig.height = 20}
@@ -431,8 +452,10 @@ pca_data_post %>%
 
 ```
 
+\newpage
+
 ## POST - ROC
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 #pca_data_post$PC2
 #pca_data_post$response
 # https://sachsmc.github.io/plotROC/
@@ -449,8 +472,9 @@ pROC::ggroc(list(pre = roc_pre,
   ggtitle(paste0("PRE AUC:", round(roc_pre$auc, 2), " POST AUC : ", round(roc_post$auc, 2))) +
   guides(color = guide_legend(title="Treatment"))
 
- 
 ```
+
+\newpage
 
 # R session
 

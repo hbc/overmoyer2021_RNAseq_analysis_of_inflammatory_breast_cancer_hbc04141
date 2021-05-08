@@ -1,0 +1,292 @@
+---
+title: "FARDEEP analysis"
+author: "Sergey Naumenko"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    code_folding: hide
+    df_print: paged
+    highlights: pygments
+    number_sections: yes
+    self_contained: yes
+    theme: default
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+---
+
+# Overview
+- Principal Investigator: Beth Overmoyer
+- Experiment: RNAseq_analysis_of_inflammatory_breast_cancer_hbc04141
+- study 6 was excluded because if low read depth in 3373-3
+- https://cran.r-project.org/web/packages/FARDEEP/FARDEEP.pdf
+
+```{r include = FALSE}
+## Setup
+### Bioconductor and CRAN libraries used
+
+library(DESeq2)
+library(tidyverse)
+library(RColorBrewer)
+library(pheatmap)
+library(DEGreport)
+library(tximport)
+library(ggplot2)
+library(ggrepel)
+library(knitr)
+library(AnnotationHub)
+library(ensembldb)
+
+ggplot2::theme_set(theme_light(base_size = 14))
+
+opts_chunk[["set"]](
+    cache = FALSE,
+    dev = c("png", "pdf"),
+    error = TRUE,
+    highlight = TRUE,
+    message = FALSE,
+    prompt = FALSE,
+    tidy = FALSE,
+    warning = FALSE)
+```
+
+# FARDEEP
+```{r, include = FALSE}
+dds <- readRDS("data/dds.RDS")
+
+# Load the data and metadata
+meta <- read_csv("tables/metadata_corrected.csv") %>% 
+    drop_na(response)
+protein_coding_genes <- read_csv("tables/ensembl_w_description.protein_coding.csv")
+counts <- counts(dds, normalized = TRUE) %>% as.data.frame()
+
+samples_day1 <- meta %>% 
+          dplyr::filter(treatment == "pre") %>% 
+          pull(samplename)
+
+samples_day8 <- meta %>% 
+          dplyr::filter(treatment == "post") %>% 
+          pull(samplename)
+
+fardeep_result <- "data/fardeep.RDS"
+if (file.exists(fardeep_result)){
+    result <- readRDS(fardeep_result)
+}else{
+    data(LM22)
+    counts2 <- counts %>% 
+            as.data.frame() %>% 
+            rownames_to_column(var = "rowname") %>% 
+            dplyr::left_join(protein_coding_genes, 
+                             by = c("rowname" = "ensembl_gene_id")) %>% 
+            dplyr::select(-one_of(c("rowname", "description")))
+
+    counts3 <- counts2 %>% dplyr::select(-external_gene_name)
+    counts3$total <- rowSums(counts3)
+    counts2$total <- counts3$total
+          
+    counts2 <- counts2 %>% arrange(-total)
+
+    counts2 <- counts2 %>% 
+      distinct(external_gene_name, .keep_all = TRUE) %>% 
+      dplyr::select(-total) %>% 
+      arrange(external_gene_name) %>% 
+      column_to_rownames("external_gene_name")
+    
+    #dplyr::filter(external_gene_name %in% rownames(LM22)) %>% 
+    
+    counts_day1 <- counts2 %>% dplyr::select(any_of(samples_day1))
+    counts_day8 <- counts2 %>% dplyr::select(any_of(samples_day8))
+    
+    # no results on 1
+    result <- fardeep(LM22, counts_day8)
+    
+    saveRDS(result, fardeep_result)
+
+
+  
+# data(mixture)
+  
+}
+
+df_fardeep <- result$relative.beta %>%
+        as.data.frame() %>% 
+        rownames_to_column(var = "sample_name") %>% 
+        left_join(meta, by = c("sample_name" = "samplename"))
+
+df_fardeep$response_type <- ifelse(df_fardeep$response == "Yes", "pCR", "no-pCR")
+
+df_fardeep_long <- df_fardeep %>% pivot_longer(cols = c("B.cells.naive", 
+                                                        "B.cells.memory", 
+                                                        "Plasma.cells",
+                                                        "T.cells.CD8",
+                                                        "T.cells.CD4.naive",
+                                                        "T.cells.CD4.memory.resting",
+                                                        "T.cells.CD4.memory.activated",
+                                                        "T.cells.follicular.helper",
+                                                        "T.cells.regulatory.Tregs.",
+                                                        "T.cells.gamma.delta",
+                                                        "NK.cells.resting",
+                                                        "NK.cells.activated",
+                                                        "Monocytes",          
+                                                        "Macrophages.M0",
+                                                        "Macrophages.M1",     
+                                                        "Macrophages.M2",   
+                                                        "Dendritic.cells.resting",
+                                                        "Dendritic.cells.activated",   
+                                                        "Mast.cells.resting",
+                                                        "Mast.cells.activated",        
+                                                        "Eosinophils",   
+                                                        "Neutrophils"),
+                                              names_to = "cell_type",
+                                              values_to = "cell_pct") %>% 
+      dplyr::filter(cell_pct > 0)
+```
+
+```{r, fig.width = 10, fig.height = 10}
+df_fardeep_long$response_order <- ifelse(df_fardeep_long$response == "Yes", 0, 1)
+df_fardeep_long  %>% ggplot(aes(fill = cell_type, 
+                                y = cell_pct, 
+                                x = reorder(sample_name, response_order))) +
+    geom_bar(position = "stack", 
+           stat = "identity") +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  xlab("Samples: pCR (left) vs no-pCR(right)") +
+  ylab("Percent cells") +
+  ggtitle("Relative cell proportions")
+```
+
+```{r, include = FALSE}
+df_fardeep_abs <- result$abs.beta %>%
+        as.data.frame() %>% 
+        rownames_to_column(var = "sample_name") %>% 
+        left_join(meta, by = c("sample_name" = "samplename"))
+
+df_fardeep_abs$response_type <- ifelse(df_fardeep_abs$response == "Yes", "pCR", "no-pCR")
+
+df_fardeep_abs_long <- df_fardeep_abs %>% pivot_longer(cols = c("B.cells.naive", 
+                                                        "B.cells.memory", 
+                                                        "Plasma.cells",
+                                                        "T.cells.CD8",
+                                                        "T.cells.CD4.naive",
+                                                        "T.cells.CD4.memory.resting",
+                                                        "T.cells.CD4.memory.activated",
+                                                        "T.cells.follicular.helper",
+                                                        "T.cells.regulatory.Tregs.",
+                                                        "T.cells.gamma.delta",
+                                                        "NK.cells.resting",
+                                                        "NK.cells.activated",
+                                                        "Monocytes",          
+                                                        "Macrophages.M0",
+                                                        "Macrophages.M1",     
+                                                        "Macrophages.M2",   
+                                                        "Dendritic.cells.resting",
+                                                        "Dendritic.cells.activated",   
+                                                        "Mast.cells.resting",
+                                                        "Mast.cells.activated",        
+                                                        "Eosinophils",   
+                                                        "Neutrophils"),
+                                              names_to = "cell_type",
+                                              values_to = "TIL_subset_abs_scores") %>% 
+      dplyr::filter(TIL_subset_abs_scores > 0)
+```
+
+```{r, fig.width = 10, fig.height = 10}
+df_fardeep_abs_long$response_order <- ifelse(df_fardeep_abs_long$response == "Yes", 0, 1)
+df_fardeep_abs_long  %>% ggplot(aes(fill = cell_type, 
+                                y = TIL_subset_abs_scores, 
+                                x = reorder(sample_name, response_order))) +
+    geom_bar(position = "stack", 
+           stat = "identity") +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  xlab("Samples: pCR (left) vs no-pCR(right)") +
+  ggtitle("Absolute TIL scores")
+```
+
+
+```{r}
+library(ggpubr)
+cell_type <- "T.cells.regulatory.Tregs."
+my_comparisons <- list(c("pCR", "no-pCR"))
+ggboxplot(df_fardeep,
+          x = "response_type", y = cell_type,  
+          add = "dotplot", add.params = list(size = 0.5)) +
+    stat_compare_means(comparisons = my_comparisons, method = "t.test") +
+    ylab("Percent cells") + 
+   ggtitle(paste0(cell_type, ", relative"))
+
+```
+
+```{r}
+library(ggpubr)
+cell_type <- "T.cells.regulatory.Tregs."
+my_comparisons <- list(c("pCR", "no-pCR"))
+ggboxplot(df_fardeep_abs,
+          x = "response_type", y = cell_type,  
+          add = "dotplot", add.params = list(size = 0.5)) +
+    stat_compare_means(comparisons = my_comparisons, method = "t.test") +
+    ylab("TIL scores") + 
+   ggtitle(paste0(cell_type, ", absolute"))
+
+```
+
+
+```{r}
+cell_type <- "T.cells.follicular.helper"
+my_comparisons <- list(c("pCR", "no-pCR"))
+ggboxplot(df_fardeep,
+          x = "response_type", y = cell_type,  
+          add = "dotplot", add.params = list(size = 0.5)) +
+    stat_compare_means(comparisons = my_comparisons, method = "t.test") +
+    ylab("Percent cells") + 
+   ggtitle(cell_type)
+
+```
+
+
+                                
+```{r}
+cell_type <- "T.cells.CD8"
+my_comparisons <- list(c("pCR", "no-pCR"))
+ggboxplot(df_fardeep,
+          x = "response_type", y = cell_type,  
+          add = "dotplot", add.params = list(size = 0.5)) +
+    stat_compare_means(comparisons = my_comparisons, method = "t.test") +
+    ylab("Percent cells") + 
+   ggtitle(cell_type)
+
+```
+
+
+```{r}
+cell_type <- "T.cells.CD4.naive"
+my_comparisons <- list(c("pCR", "no-pCR"))
+ggboxplot(df_fardeep,
+          x = "response_type", y = cell_type,  
+          add = "dotplot", add.params = list(size = 0.5)) +
+    stat_compare_means(comparisons = my_comparisons, method = "t.test") +
+    ylab("Percent cells") + 
+   ggtitle(cell_type)
+
+```
+
+
+```{r}
+cell_type <- "T.cells.CD4.memory.resting"
+
+my_comparisons <- list(c("pCR", "no-pCR"))
+ggboxplot(df_fardeep,
+          x = "response_type", y = cell_type,  
+          add = "dotplot", add.params = list(size = 0.5)) +
+    stat_compare_means(comparisons = my_comparisons, method = "t.test") +
+    ylab("Percent cells") + 
+   ggtitle(cell_type)
+
+```
+# R session
+
+```{r}
+sessionInfo()
+```

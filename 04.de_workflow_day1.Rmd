@@ -3,8 +3,6 @@ title: "DE analysis - Day1"
 author: "Sergey Naumenko"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     code_folding: hide
     df_print: paged
@@ -16,6 +14,8 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: yes
+  pdf_document:
+    toc: yes
 ---
 
 # Overview
@@ -29,7 +29,10 @@ output:
 - http://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
 - this is DE for Day1 samples
 
-```{r include = TRUE}
+```{r include = FALSE}
+remove_cases_2_19 <- TRUE
+rebuild_rds <- FALSE
+
 ## Setup
 ### Bioconductor and CRAN libraries used
 
@@ -57,7 +60,8 @@ opts_chunk[["set"]](
     tidy = FALSE,
     warning = FALSE)
 ```
-```{r include = TRUE}
+
+```{r include = FALSE}
 # Have a folder called `data`, and copy your Salmon folders here from the cluster. 
 ## List all directories containing data  
 ### change the pattern to something specific to your Salmon folders
@@ -74,15 +78,25 @@ files
 names(files) <- str_replace(samples, "./data/final/", "") 
 ```
 
-```{r include = TRUE}
+```{r include = FALSE}
 # Load the data and metadata
 meta <- read_csv("tables/metadata_corrected.csv") %>% 
   column_to_rownames(var = "samplename") %>% 
   dplyr::filter(treatment == "pre") %>% 
   drop_na(response)
+
+if (remove_cases_2_19){
+   meta <- meta %>% dplyr::filter(!study_id %in% c(2, 19))
+   files <- files[rownames(meta)]
+}
+
+meta$response <- str_replace(meta$response, "Yes", "pCR")
+meta$response <- str_replace(meta$response, "No", "non-pCR")
+
 protein_coding_genes <- read_csv("tables/ensembl_w_description.protein_coding.csv")
 ```
-```{r include = TRUE}
+
+```{r include = FALSE}
 # Connect to AnnotationHub
 ah <- AnnotationHub()
 
@@ -110,19 +124,19 @@ write.table(hsdb,
             row.names = F, 
             quote = F)
 ```
-```{r include = TRUE}
+```{r include = FALSE}
 # Read in  a tx2gene file with transcript identifiers in the first column and gene identifiers in the second column
 #wormdb <- read.table("ensembl94_WBcel235_annotations.txt", sep="\t", header=T)
 tx2gene <- hsdb[, c("tx_id", "gene_id")]
 
 
 # Run tximport
-files <- files[rownames(meta)]
 txi_file <- "data/txi.day1.RDS"
-if (file.exists(txi_file)){
+if (!rebuild_rds & file.exists(txi_file)){
     txi <- readRDS(txi_file)
 }else{
-    txi <- tximport(files, 
+    files <- files[rownames(meta)]
+    txi <- tximport(files,
                 type = "salmon", 
                 tx2gene = tx2gene, 
                 countsFromAbundance = "lengthScaledTPM", 
@@ -153,19 +167,12 @@ It is always a good idea to check if:
 ### Check that sample names match in both files
 all(colnames(txi$counts) %in% rownames(meta))
 
-# Not the same? Make them the same
-### This will change depending on what names you have listed!
-#paste0(meta$samplename, "_", meta$library)
-#rownames(meta) <- paste0(meta$samplename, "_", meta$library)
-#meta$genotype <- relevel(meta$genotype, ref="Wildtype")
-
 ### Check that sample names match in both files
 all(colnames(txi$counts) %in% rownames(meta))
 
 ### Check that all samples are in the same order
 meta <- meta[colnames(txi$counts),]
 all(colnames(txi$counts) == rownames(meta))
-
 ```
 
 # Run DESeq2
@@ -196,16 +203,20 @@ meta$date_of <- as.factor(meta$date_of)
 meta$tumor_percentage <- as.factor(meta$tumor_percentage)
 meta$tumor_percentage_high <- as.factor(meta$tumor_percentage_high)
 
-non_responders <- meta %>% dplyr::filter(study_id %in% c(2, 19)) %>% row.names() 
+if (remove_cases_2_19){
+  non_responders <- meta %>% dplyr::filter(study_id %in% c(2, 19)) %>% row.names() 
+}
 
-if (file.exists(dds_file)){
+if (!rebuild_rds & file.exists(dds_file)){
     dds <- readRDS(dds_file)
 }else{
     dds <- DESeqDataSetFromTximport(txi,
                                 colData = meta, 
                                 design = ~response)
     
-    #dds <- dds[,!colnames(dds) %in% non_responders]
+    if (remove_cases_2_19){
+        dds <- dds[,!colnames(dds) %in% non_responders]
+    }
     design(dds) <- formula(~response + er + tumor_percentage_high + date_of)
     
     # subset protein-coding genes
@@ -276,7 +287,7 @@ mdata %>% ggplot(aes(date_of, fill = response)) + geom_bar(position = "dodge2")
 ```{r include = TRUE}
 ### Transform counts for data visualization (unsupervised analysis)
 rld_file <- "data/rld.day1.RDS"
-if (file.exists(rld_file)){
+if (!rebuild_rds &file.exists(rld_file)){
     rld <- readRDS(rld_file)
 }else{
     rld <- rlog(dds, blind = TRUE)
@@ -288,40 +299,50 @@ class(rld) # what type of object is this
 rld_mat <- assay(rld)
 ```
 
+\newpage
+
 ## PCA - response
-```{r}
+```{r, fig.width = 10, fig.height = 10}
 # Use the DESeq2 function
-plotPCA(rld, intgroup = c("response"))
+plotPCA(rld, intgroup = c("response")) + geom_label_repel(aes(label = name))
 ```
+
+\newpage
 
 ## PCA - ER
-```{r}
+```{r, fig.width = 10, fig.height= 10}
 # Use the DESeq2 function
-plotPCA(rld, intgroup = c("er"))
+plotPCA(rld, intgroup = c("er")) + geom_label_repel(aes(label = name))
 ```
+
+\newpage
 
 ## PCA - tumor_percentage
-```{r}
+```{r, fig.width = 10, fig.height = 10}
 # Use the DESeq2 function
-plotPCA(rld, intgroup = c("tumor_percentage"))
+plotPCA(rld, intgroup = c("tumor_percentage")) + geom_label_repel(aes(label = name))
 ```
+
+\newpage
 
 ## PCA - tumor_percentage_high
-```{r}
+```{r, fig.width =10, fig.height = 10}
 # Use the DESeq2 function
-plotPCA(rld, intgroup = c("tumor_percentage_high"))
+plotPCA(rld, intgroup = c("tumor_percentage_high")) + geom_label_repel(aes(label = name))
 ```
+
+\newpage
 
 ## PCA - date_of
-```{r}
+```{r, fig.width = 10, fig.height = 10}
 # Use the DESeq2 function
-plotPCA(rld, intgroup = c("date_of"))
+plotPCA(rld, intgroup = c("date_of")) + geom_label_repel(aes(label = name))
 ```
 
+\newpage
+
 # Inter-correlation analysis
-
 ## Without study_id
-
 ```{r, fig.width = 20, fig.height = 20}
 # Correlation matrix
 rld_cor <- cor(rld_mat)
@@ -339,6 +360,8 @@ pheatmap(rld_cor,
          border = NA,
          fontsize = 20)
 ```
+
+\newpage
 
 ## With study_id
 
@@ -360,11 +383,12 @@ pheatmap(rld_cor,
          fontsize = 20)
 ```
 
+\newpage
 
-# Response Yes vs No for Day 1- see Table9
-```{r}
+# Response pCR vs non-pCR for Day 1- see Table9
+```{r, include = FALSE}
 # Get results for rescue vs wt
-contrast <- c("response", "Yes", "No")
+contrast <- c("response", "pCR", "non-pCR")
 resResponse <- results(dds, contrast = contrast, alpha = 0.05)
 length(which(resResponse$padj < 0.05))
 
@@ -377,7 +401,7 @@ resResponse_tb <- resResponse %>%
 
 resResponse_tb_significant <- dplyr::filter(resResponse_tb, padj < 0.05)
 
-samples_no <- meta %>% dplyr::filter(response == "No") %>% row.names() 
+samples_no <- meta %>% dplyr::filter(response == "non-pCR") %>% row.names() 
 
 counts_no <- txi$abundance %>%
                 as.data.frame() %>% 
@@ -385,9 +409,9 @@ counts_no <- txi$abundance %>%
                 rowSums() %>% 
                 as.data.frame() %>% 
                 rownames_to_column(var = "ensembl_gene_id")
-colnames(counts_no) <- c("ensembl_gene_id", "no_expression_mean_tpm")
+colnames(counts_no) <- c("ensembl_gene_id", "non-pCR_expression_mean_tpm")
 
-samples_yes <- meta %>% dplyr::filter(response == "Yes") %>% row.names() 
+samples_yes <- meta %>% dplyr::filter(response == "pCR") %>% row.names() 
 
 counts_yes <- txi$abundance %>% 
                 as.data.frame() %>% 
@@ -396,7 +420,7 @@ counts_yes <- txi$abundance %>%
                 as.data.frame() %>% 
                 rownames_to_column(var = "ensembl_gene_id")
 
-colnames(counts_yes) <- c("ensembl_gene_id", "yes_expression_mean_tpm")
+colnames(counts_yes) <- c("ensembl_gene_id", "pCR_expression_mean_tpm")
 
 counts_yes <-counts_yes %>% 
             left_join(counts_no, 
@@ -415,7 +439,7 @@ sigResponse_down <- rownames(resResponse)[which(resResponse$padj < 0.01 & resRes
 ```
 
 # ER : Positive vs Negative for Day1 - Table 10
-```{r}
+```{r, include = FALSE}
 contrast <- c("er", "Positive", "Negative")
 resER <- results(dds, contrast = contrast, alpha = 0.05)
 length(which(resER$padj < 0.05))
@@ -467,7 +491,7 @@ sigER_down <- rownames(resER)[which(resER$padj < 0.01 & resER$log2FoldChange < 0
 ```
 
 # tumor_percentage_high : High vs Low for Day1- Table 11
-```{r}
+```{r, include = FALSE}
 contrast <- c("tumor_percentage_high", "high", "low")
 resTP <- results(dds, contrast = contrast, alpha = 0.05)
 length(which(resTP$padj < 0.05))
@@ -520,7 +544,7 @@ sigTP_down <- rownames(resTP)[which(resTP$padj < 0.01 & resTP$log2FoldChange < 0
 
 
 # date_of: 20180323 vs 20180228 - for Day1: Table 12
-```{r}
+```{r, include = FALSE}
 contrast <- c("date_of", "20180323", "20180228")
 resDO <- results(dds, contrast = contrast, alpha = 0.05)
 length(which(resDO$padj < 0.05))
@@ -591,7 +615,7 @@ ggplot(d, aes(x = response, y = count)) +
      
 ```
 
-
+\newpage
 
 ```{r}
 # Add a column for significant genes
@@ -606,7 +630,7 @@ resResponse_tb_vis$symbol <- ifelse(resResponse_tb_vis$threshold,
 ggplot(resResponse_tb_vis,
        aes(log2FoldChange, -log10(padj), label = symbol)) +
   geom_point(aes(x = log2FoldChange, y = -log10(padj), colour = threshold)) +
-  ggtitle("Response Yes vs No") +
+  ggtitle("Response pCR vs non-pCR") +
   xlab("log2 fold change") + 
   ylab("-log10 adjusted p-value") +
   scale_x_continuous(limits = c(-10,10)) +
@@ -620,6 +644,8 @@ ggplot(resResponse_tb_vis,
         panel.background = element_blank()) +
   geom_text_repel(aes(label = symbol))
 ```
+
+\newpage
 
 ```{r}
 # Add a column for significant genes
@@ -636,6 +662,8 @@ ggplot(resER_tb) +
         axis.title = element_text(size = rel(1.25)))
 ```
 
+\newpage
+
 ```{r}
 # Add a column for significant genes
 resTP_tb <- resTP_tb %>% mutate(threshold = padj < 0.01)
@@ -651,6 +679,8 @@ ggplot(resTP_tb) +
         axis.title = element_text(size = rel(1.25)))
 ```
 
+\newpage
+
 ```{r}
 # Add a column for significant genes
 resDO_tb <- resDO_tb %>% mutate(threshold = padj < 0.01)
@@ -665,9 +695,10 @@ ggplot(resDO_tb) +
         plot.title = element_text(size = rel(1.5), hjust = 0.5),
         axis.title = element_text(size = rel(1.25)))
 ```
+
+\newpage
+
 # Heatmaps
-
-
 ```{r, fig.width = 20, fig.height = 30}
 # Create a matrix of normalized expression
 sig_up <- resResponse_tb_significant %>% arrange(-log2FoldChange) %>% head(50) %>% pull(gene)
@@ -696,10 +727,11 @@ pheatmap(plotmat,
          show_rownames = TRUE,
          border = FALSE,
          annotation = meta[, c("response"), drop = FALSE],
-         main = "Top 50 Up- and Down- regulated genes in Response: Yes vs No",
+         main = "Top 50 Up- and Down- regulated genes in Response: pCR vs non-pCR",
          fontsize = 20)
-
 ```
+
+\newpage
 
 ```{r, fig.width = 20, fig.height = 30}
 # Create a matrix of normalized expression
@@ -734,6 +766,7 @@ pheatmap(plotmat,
 
 ```
 
+\newpage
 
 
 ```{r, fig.width = 20, fig.height = 10}
@@ -769,6 +802,7 @@ pheatmap(plotmat,
 
 ```
 
+\newpage
 
 ```{r, fig.width = 20, fig.height = 30}
 # Create a matrix of normalized expression
@@ -803,6 +837,8 @@ pheatmap(plotmat,
 
 ```
 
+\newpage
+
 # Generate input files for GSEA
 ```{r}
 #  prepares an expression profile for GSEA
@@ -835,6 +871,8 @@ counts_gsea <- counts_gsea[,c("NAME", "DESCRIPTION", samples_yes, samples_no)]
 write_tsv(counts_gsea, result_file)
 ```
 
+
+\newpage
 
 # Functional analysis
 ## Biological Process (BP)
@@ -879,7 +917,6 @@ results_down <- data.frame(compGO@result) %>% dplyr::filter(p.adjust < 0.05)
 print("Down")
 nrow(results_down)
 ```
-
 
 # R session
 
