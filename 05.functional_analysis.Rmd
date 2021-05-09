@@ -66,7 +66,7 @@ compGO <- enrichGO(gene = sigResponse_up,
 
 ## Output results from GO analysis to a table
 summary <- data.frame(compGO@result)
-write_csv(summary, "tables/T10.go.response_up.csv")
+write_csv(summary, "tables/T20.go.response_up.csv")
 ```
 
 

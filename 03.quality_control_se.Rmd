@@ -366,7 +366,7 @@ pca_data %>%
 # PCA - protein coding genes - PRE/POST - Responce
 
 ## PRE
-```{r pca_pre, fig.width = 20, fig.height = 20}
+```{r pca_pre, fig.width = 10, fig.height = 10}
 se_pre <- se[,se$treatment == "pre"]
 raw_counts <- assays(se_pre)[["raw"]] %>% 
     as_tibble(rownames = "ensembl_gene_id") %>% 
@@ -384,18 +384,23 @@ pca_data_pre <- pca[["data"]] %>% as_tibble() %>%
 
 pca_data_pre$response <- as.factor(pca_data_pre$response)
 
-pca_data_pre %>%
+# ggtitle(paste0("PCA:", nrow(vst), " genes")) +
+fig3b <- pca_data_pre %>%
     ggplot(aes(x = PC1, y = PC2, color = response, label = sample)) + 
     geom_point(size = 5) + 
     geom_text_repel(size = 10) + 
     xlab(pca_labels$x) + 
     ylab(pca_labels$y) +
-    ggtitle(paste0("PCA:", nrow(vst), " genes")) +
-    theme_bw(base_size = 20) +
+    theme_bw(base_size = 15) +
     theme(axis.text = element_text(size = 20),
           axis.title = element_text(size = 20, face="bold"),
-          legend.text = element_text(size = rel(1)))
+          legend.text = element_text(size = rel(1)),
+          panel.border = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank())
 
+saveRDS(fig3b, "data/fig3b.RDS")
+fig3b
 ```
 
 \newpage
@@ -420,7 +425,7 @@ ggroc(roc_pre,
 \newpage
 
 ## POST
-```{r pca_post, fig.width = 20, fig.height = 20}
+```{r pca_post, fig.width = 10, fig.height = 10}
 se_post <- se[,se$treatment == "post"]
 raw_counts <- assays(se_post)[["raw"]] %>% 
     as_tibble(rownames = "ensembl_gene_id") %>% 
@@ -438,39 +443,54 @@ pca_data_post <- pca_post[["data"]] %>% as_tibble() %>%
 
 pca_data_post$response <- as.factor(pca_data_post$response)
 
-pca_data_post %>%
+#ggtitle(paste0("PCA:", nrow(vst), " genes")) +
+fig3c <- pca_data_post %>%
     ggplot(aes(x = PC1, y = PC2, color = response, label = sample)) + 
     geom_point(size = 5) + 
-    geom_text_repel(size = 15) + 
+    geom_text_repel(size = 10) + 
     xlab(pca_labels$x) + 
     ylab(pca_labels$y) +
-    ggtitle(paste0("PCA:", nrow(vst), " genes")) +
-    theme_bw(base_size = 20) +
+    theme_bw(base_size = 15) +
     theme(axis.text = element_text(size = 20),
           axis.title = element_text(size = 20, face="bold"),
-          legend.text = element_text(size = rel(1)))
+          legend.text = element_text(size = rel(1)),
+          panel.border = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank())
 
+saveRDS(fig3c, "data/fig3c.RDS")
+fig3c
 ```
 
 \newpage
 
 ## POST - ROC
-```{r, fig.width = 5, fig.height = 5}
+```{r, fig.width = 10, fig.height = 10}
 #pca_data_post$PC2
 #pca_data_post$response
 # https://sachsmc.github.io/plotROC/
 roc_post <- roc(pca_data_post$response, pca_data_post$PC2, percent = FALSE)
 
-pROC::ggroc(list(pre = roc_pre,
+fig3d <- pROC::ggroc(list(pre = roc_pre,
            post = roc_post),
-           legacy.axes = TRUE, size = 1, linetype = 2) +
+           legacy.axes = TRUE, size = 2, linetype = 2) +
   scale_x_continuous(labels = scales::percent) +
   scale_y_continuous(labels = scales::percent) +
   xlab("100% - specificity : False Positive Percentage") +
   ylab("Sensitivity : True Postive Percentage") + 
   theme_bw() +
   ggtitle(paste0("PRE AUC:", round(roc_pre$auc, 2), " POST AUC : ", round(roc_post$auc, 2))) +
-  guides(color = guide_legend(title="Treatment"))
+  guides(color = guide_legend(title="Treatment")) +
+  theme_bw(base_size = 20) +
+    theme(axis.text = element_text(size = 20),
+          axis.title = element_text(size = 20, face="bold"),
+          legend.text = element_text(size = rel(1)),
+          panel.border = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank())
+
+saveRDS(fig3d, "data/fig3d.RDS")
+fig3d
 
 ```
 

@@ -45,6 +45,7 @@ library(ggrepel)
 library(knitr)
 library(AnnotationHub)
 library(ensembldb)
+library(ggplotify)
 
 ggplot2::theme_set(theme_light(base_size = 14))
 
@@ -86,6 +87,13 @@ meta$response <- str_replace(meta$response, "No", "non-pCR")
 protein_coding_genes <- read_csv("tables/ensembl_w_description.protein_coding.csv")
 ```
 ```{r include = FALSE}
+annotation_file <- "data/ensembl94_hg38_annotations.txt"
+gene_symbol_file <- "data/gene_symbol.txt"
+if (file.exists(annotation_file)){
+    hsdb <- read_tsv(annotation_file)
+    gene_symbol <- read_tsv(gene_symbol_file)
+}else{
+
 # Connect to AnnotationHub
 ah <- AnnotationHub()
 # Query AnnotationHub
@@ -104,13 +112,15 @@ genedb <- genes(hs_ens,
   dplyr::select(gene_id, gene_name, symbol)  
 
 gene_symbol <- genedb %>% dplyr::select(gene_id, symbol)
+write_tsv(gene_symbol, gene_symbol_file)
 
 hsdb <- inner_join(txdb, genedb)
 write.table(hsdb, 
-            file = "data/ensembl94_hg38_annotations.txt", 
+            file = annotation_file , 
             sep = "\t", 
             row.names = F, 
             quote = F)
+}
 ```
 
 ```{r include = FALSE}
@@ -426,6 +436,12 @@ annotation <- meta[, c("treatment", "response", "er", "tumor_percentage_high", "
 heat.colors <- brewer.pal(6, "Blues")
 rld_cor <- cor(rld_mat_500)
 # Plot heatmap
+fig3a <- as.ggplot(pheatmap(rld_cor, 
+         annotation = annotation, 
+         border = NA,
+         fontsize = 15,
+         cellheight = 20))
+saveRDS(fig3a, "data/fig3a.RDS")
 pheatmap(rld_cor, 
          annotation = annotation, 
          border = NA,

@@ -30,7 +30,7 @@ output:
 - this is DE for Day1 samples
 
 ```{r include = FALSE}
-remove_cases_2_19 <- TRUE
+remove_cases_2_19 <- FALSE
 rebuild_rds <- FALSE
 
 ## Setup
@@ -97,6 +97,13 @@ protein_coding_genes <- read_csv("tables/ensembl_w_description.protein_coding.cs
 ```
 
 ```{r include = FALSE}
+annotation_file <- "data/ensembl94_hg38_annotations.txt"
+gene_symbol_file <- "data/gene_symbol.txt"
+if (file.exists(annotation_file)){
+    hsdb <- read_tsv(annotation_file)
+    gene_symbol <- read_tsv(gene_symbol_file)
+}else{
+
 # Connect to AnnotationHub
 ah <- AnnotationHub()
 
@@ -117,12 +124,15 @@ genedb <- genes(hs_ens,
 
 gene_symbol <- genedb %>% dplyr::select(gene_id, symbol)
 
+write_tsv(gene_symbol, gene_symbol_file)
+
 hsdb <- inner_join(txdb, genedb)
 write.table(hsdb, 
-            file = "data/ensembl94_hg38_annotations.txt", 
+            file = annotation_file, 
             sep = "\t", 
             row.names = F, 
             quote = F)
+}
 ```
 ```{r include = FALSE}
 # Read in  a tx2gene file with transcript identifiers in the first column and gene identifiers in the second column
@@ -617,7 +627,7 @@ ggplot(d, aes(x = response, y = count)) +
 
 \newpage
 
-```{r}
+```{r, fig.width = 10, fig.height = 10}
 # Add a column for significant genes
 resResponse_tb_vis <- resResponse_tb %>% mutate(threshold = padj < 0.01)
 
@@ -627,7 +637,7 @@ resResponse_tb_vis$symbol <- ifelse((abs(resResponse_tb_vis$log2FoldChange) > 1.
 resResponse_tb_vis$symbol <- ifelse(resResponse_tb_vis$threshold,   
                                     resResponse_tb_vis$symbol, NA) 
 
-ggplot(resResponse_tb_vis,
+fig4a <- ggplot(resResponse_tb_vis,
        aes(log2FoldChange, -log10(padj), label = symbol)) +
   geom_point(aes(x = log2FoldChange, y = -log10(padj), colour = threshold)) +
   ggtitle("Response pCR vs non-pCR") +
@@ -642,7 +652,9 @@ ggplot(resResponse_tb_vis,
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank()) +
-  geom_text_repel(aes(label = symbol))
+  geom_text_repel(aes(label = symbol), size = 5)
+saveRDS(fig4a, "data/fig4a.RDS")
+fig4a
 ```
 
 \newpage

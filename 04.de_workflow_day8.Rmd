@@ -30,7 +30,7 @@ output:
 - this is DE for Day8 samples
 
 ```{r include = FALSE}
-remove_cases_2_19 <- TRUE
+remove_cases_2_19 <- FALSE
 rebuild_rds <- FALSE
 ## Setup
 ### Bioconductor and CRAN libraries used
@@ -95,6 +95,12 @@ meta$response <- str_replace(meta$response, "No", "non-pCR")
 protein_coding_genes <- read_csv("tables/ensembl_w_description.protein_coding.csv")
 ```
 ```{r include = FALSE}
+annotation_file <- "data/ensembl94_hg38_annotations.txt"
+gene_symbol_file <- "data/gene_symbol.txt"
+if (file.exists(annotation_file)){
+    hsdb <- read_tsv(annotation_file)
+    gene_symbol <- read_tsv(gene_symbol_file)
+}else{
 # Connect to AnnotationHub
 ah <- AnnotationHub()
 
@@ -115,12 +121,14 @@ genedb <- genes(hs_ens,
 
 gene_symbol <- genedb %>% dplyr::select(gene_id, symbol)
 
+write_tsv(gene_symbol, gene_symbol_file)
 hsdb <- inner_join(txdb, genedb)
 write.table(hsdb, 
             file = "data/ensembl94_hg38_annotations.txt", 
             sep = "\t", 
             row.names = F, 
             quote = F)
+}
 ```
 
 ```{r include = TRUE}
@@ -165,12 +173,6 @@ It is always a good idea to check if:
 ```{r}
 ### Check that sample names match in both files
 all(colnames(txi$counts) %in% rownames(meta))
-
-# Not the same? Make them the same
-### This will change depending on what names you have listed!
-#paste0(meta$samplename, "_", meta$library)
-#rownames(meta) <- paste0(meta$samplename, "_", meta$library)
-#meta$genotype <- relevel(meta$genotype, ref="Wildtype")
 
 ### Check that sample names match in both files
 all(colnames(txi$counts) %in% rownames(meta))
@@ -637,7 +639,7 @@ resResponse_tb_vis$symbol <- ifelse((abs(resResponse_tb_vis$log2FoldChange) > 1.
 resResponse_tb_vis$symbol <- ifelse(resResponse_tb_vis$threshold,   
                                     resResponse_tb_vis$symbol, NA) 
 
-ggplot(resResponse_tb_vis,
+fig4b <- ggplot(resResponse_tb_vis,
        aes(log2FoldChange, -log10(padj), label = symbol)) +
   geom_point(aes(colour = threshold)) +
   ggtitle("Response pCR vs non-pCR") +
@@ -652,8 +654,10 @@ ggplot(resResponse_tb_vis,
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank()) +
-  geom_text_repel(aes(label = symbol))
-  
+  geom_text_repel(aes(label = symbol), size = 5)
+
+saveRDS(fig4b, "data/fig4b.RDS")  
+fig4b
 ```
 
 \newpage
