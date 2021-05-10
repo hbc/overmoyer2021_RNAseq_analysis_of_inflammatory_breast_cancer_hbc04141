@@ -39,6 +39,7 @@ library(ggrepel)
 library(knitr)
 library(AnnotationHub)
 library(ensembldb)
+library(FARDEEP)
 
 ggplot2::theme_set(theme_light(base_size = 14))
 

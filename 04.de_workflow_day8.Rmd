@@ -3,6 +3,8 @@ title: "DE analysis - Day8"
 author: "Sergey Naumenko"
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     code_folding: hide
     df_print: paged
@@ -14,8 +16,6 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: yes
-  pdf_document:
-    toc: yes
 ---
 
 # Overview
@@ -47,6 +47,7 @@ library(knitr)
 library(AnnotationHub)
 library(ensembldb)
 library(org.Hs.eg.db)
+library(clusterProfiler)
 
 ggplot2::theme_set(theme_light(base_size = 14))
 
@@ -892,7 +893,11 @@ write_tsv(counts_gsea, result_file)
 bg_genes <- rownames(resResponse)
 
 ## Run GO enrichment analysis 
-compGO <- enrichGO(gene = sigResponse_up,
+compgo_file <- "data/day8.compgo.up.RDS"
+if (file.exists(compgo_file)){
+    compGO <- readRDS(compgo_file)
+}else{
+    compGO <- enrichGO(gene = sigResponse_up,
                    universe = bg_genes,
                    keyType = "ENSEMBL",
                    OrgDb = "org.Hs.eg.db", 
@@ -900,22 +905,34 @@ compGO <- enrichGO(gene = sigResponse_up,
                    qvalueCutoff  = 0.05, 
                    pAdjustMethod = "BH",
                    readable = TRUE)
+    saveRDS(compGO, compgo_file)
+}
 
-#dotplot(compGO,
-#        showCategory = 20, 
-#        title = "GO (Biological Process) Enrichment \n Analysis for UP in Responders)",
-#        label_format = 20,
-#        font.size = 10)
-# image pdf 12 x 12
+dotplot(compGO,
+        showCategory = 20, 
+        title = "GO (Biological Process) Enrichment \n Analysis for UP in pCR)",
+        label_format = 20,
+        font.size = 10)
+```
 
+
+```{r}
 ## Output results from GO analysis to a table
+
 print("UP")
 results_up <- data.frame(compGO@result) %>% dplyr::filter(p.adjust < 0.05)
 nrow(results_up)
-
 write_csv(results_up, "tables/T20.day8.GO_BP_UP.csv")
+```
 
-compGO <- enrichGO(gene = sigResponse_down,
+\newpage
+
+```{r}
+compgo_file <- "data/day8.compgo.down.RDS"
+if (file.exists(compgo_file)){
+    compGO <- readRDS(compgo_file)
+}else{
+    compGO <- enrichGO(gene = sigResponse_down,
                    universe = bg_genes,
                    keyType = "ENSEMBL",
                    OrgDb = "org.Hs.eg.db", 
@@ -923,20 +940,32 @@ compGO <- enrichGO(gene = sigResponse_down,
                    qvalueCutoff  = 0.05, 
                    pAdjustMethod = "BH",
                    readable = TRUE)
+    saveRDS(compGO, compgo_file)
+}
 
 
 results_down <- data.frame(compGO@result) %>% dplyr::filter(p.adjust < 0.05)
 print("Down")
 nrow(results_down)
+write_csv(results_down, "tables/T21.day8.GO_BP_DOWN.csv")
+dotplot(compGO,
+        showCategory = 20, 
+        title = "GO (Biological Process) Enrichment \n Analysis for Down in pCR)",
+        label_format = 20,
+        font.size = 10)
 ```
-
+\newpage
 
 ## Molecular Function (MF)
 ```{r, fig.width = 12, fig.height = 12}
 bg_genes <- rownames(resResponse)
 
 ## Run GO enrichment analysis 
-compGO <- enrichGO(gene = sigResponse_up,
+compgo_file <- "data/day8.compgo.up.mf.RDS"
+if (file.exists(compgo_file)){
+    compGO <- readRDS(compgo_file)
+}else{
+    compGO <- enrichGO(gene = sigResponse_up,
                    universe = bg_genes,
                    keyType = "ENSEMBL",
                    OrgDb = "org.Hs.eg.db", 
@@ -944,12 +973,8 @@ compGO <- enrichGO(gene = sigResponse_up,
                    qvalueCutoff  = 0.05, 
                    pAdjustMethod = "BH",
                    readable = TRUE)
-
-#dotplot(compGO,
-#        showCategory = 20, 
-#        title = "GO (Biological Process) Enrichment \n Analysis for UP in Responders)",
-#        label_format = 20,
-#        font.size = 10)
+    saveRDS(compGO, compgo_file)
+}
 # image pdf 12 x 12
 
 ## Output results from GO analysis to a table
@@ -957,29 +982,61 @@ print("UP")
 results_up <- data.frame(compGO@result) %>% dplyr::filter(p.adjust < 0.05)
 nrow(results_up)
 
-write_csv(results_up, "tables/T21.day8.GO_MF_UP.csv")
+write_csv(results_up, "tables/T22.day8.GO_MF_UP.csv")
 
-compGO <- enrichGO(gene = sigResponse_down,
+dotplot(compGO,
+        showCategory = 20, 
+        title = "GO (Molecular Function) Enrichment \n Analysis for UP in pCR)",
+        label_format = 20,
+        font.size = 10)
+
+```
+
+
+\newpage
+
+```{r, fig.width = 12, fig.height = 12}
+compgo_file <- "data/day8.compgo.down.mf.RDS"
+if (file.exists(compgo_file)){
+    compGO <- readRDS(compgo_file)
+}else{
+  compGO <- enrichGO(gene = sigResponse_down,
                    universe = bg_genes,
                    keyType = "ENSEMBL",
                    OrgDb = "org.Hs.eg.db", 
-                   ont = "BP", 
+                   ont = "MF", 
                    qvalueCutoff  = 0.05, 
                    pAdjustMethod = "BH",
                    readable = TRUE)
-
+   saveRDS(compGO, compgo_file)
+}
 
 results_down <- data.frame(compGO@result) %>% dplyr::filter(p.adjust < 0.05)
 print("Down")
 nrow(results_down)
+write_csv(results_up, "tables/T22.day8.GO_MF_DOWN.csv")
+
+if (nrow(results_down) > 0){
+  dotplot(compGO,
+        showCategory = 20, 
+        title = "GO (Molecular Function) Enrichment \n Analysis for DOWN in pCR)",
+        label_format = 20,
+        font.size = 10)
+}
+
 ```
+\newpage
 
 ## Cellular Compartment (CC)
 ```{r, fig.width = 12, fig.height = 12}
 bg_genes <- rownames(resResponse)
 
 ## Run GO enrichment analysis 
-compGO <- enrichGO(gene = sigResponse_up,
+compgo_file <- "data/day8.compgo.up.cc.RDS"
+if (file.exists(compgo_file)){
+    compGO <- readRDS(compgo_file)
+}else{
+  compGO <- enrichGO(gene = sigResponse_up,
                    universe = bg_genes,
                    keyType = "ENSEMBL",
                    OrgDb = "org.Hs.eg.db", 
@@ -987,12 +1044,9 @@ compGO <- enrichGO(gene = sigResponse_up,
                    qvalueCutoff  = 0.05, 
                    pAdjustMethod = "BH",
                    readable = TRUE)
+  saveRDS(compGO, compgo_file)
+}
 
-#dotplot(compGO,
-#        showCategory = 20, 
-#        title = "GO (Biological Process) Enrichment \n Analysis for UP in Responders)",
-#        label_format = 20,
-#        font.size = 10)
 # image pdf 12 x 12
 
 ## Output results from GO analysis to a table
@@ -1000,21 +1054,46 @@ print("UP")
 results_up <- data.frame(compGO@result) %>% dplyr::filter(p.adjust < 0.05)
 nrow(results_up)
 
-write_csv(results_up, "tables/T22.day8.GO_CC_UP.csv")
+write_csv(results_up, "tables/T23.day8.GO_CC_UP.csv")
 
-compGO <- enrichGO(gene = sigResponse_down,
+
+dotplot(compGO,
+        showCategory = 20, 
+        title = "GO (Cellular compartment) Enrichment \n Analysis for UP in pCR)",
+        label_format = 20,
+        font.size = 10)
+```
+
+\newpage
+
+```{r, fig.width = 12, fig.height = 12}
+compgo_file <- "data/day8.compgo.down.cc.RDS"
+if (file.exists(compgo_file)){
+    compGO <- readRDS(compgo_file)
+}else{
+    compGO <- enrichGO(gene = sigResponse_down,
                    universe = bg_genes,
                    keyType = "ENSEMBL",
                    OrgDb = "org.Hs.eg.db", 
-                   ont = "BP", 
+                   ont = "CC", 
                    qvalueCutoff  = 0.05, 
                    pAdjustMethod = "BH",
                    readable = TRUE)
-
+    saveRDS(compGO, compgo_file)
+}
 
 results_down <- data.frame(compGO@result) %>% dplyr::filter(p.adjust < 0.05)
 print("Down")
 nrow(results_down)
+write_csv(results_up, "tables/T24.day8.GO_CC_DOWN.csv")
+
+if (nrow(results_down) > 0){
+dotplot(compGO,
+        showCategory = 20, 
+        title = "GO (Cellular compartment) Enrichment \n Analysis for DOWN in pCR)",
+        label_format = 20,
+        font.size = 10)
+}
 ```
 
 # R session
