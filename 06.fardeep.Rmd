@@ -40,6 +40,7 @@ library(knitr)
 library(AnnotationHub)
 library(ensembldb)
 library(FARDEEP)
+library(ggpubr)
 
 ggplot2::theme_set(theme_light(base_size = 14))
 
@@ -208,84 +209,52 @@ df_fardeep_abs_long  %>% ggplot(aes(fill = cell_type,
 
 
 ```{r}
-library(ggpubr)
-cell_type <- "T.cells.regulatory.Tregs."
+df_fardeep$macrophages_combined <- df_fardeep$Macrophages.M0 + df_fardeep$Macrophages.M1 + df_fardeep$Macrophages.M2
+df_fardeep_abs$macrophages_combined <- df_fardeep_abs$Macrophages.M0 + df_fardeep_abs$Macrophages.M1 + df_fardeep_abs$Macrophages.M2
 my_comparisons <- list(c("pCR", "no-pCR"))
-ggboxplot(df_fardeep,
+for (cell_type in c("B.cells.naive",
+                    "B.cells.memory",
+                    "Plasma.cells",
+                    "T.cells.CD8",
+                    "T.cells.CD4.naive",
+                    "T.cells.CD4.memory.resting",
+                    "T.cells.CD4.memory.activated",
+                    "T.cells.follicular.helper",
+                    "T.cells.regulatory.Tregs.",
+                    "T.cells.gamma.delta",
+                    "NK.cells.resting",
+                    "NK.cells.activated",
+                    "Monocytes",
+                    "Macrophages.M0",
+                    "Macrophages.M1",
+                    "Macrophages.M2",
+                    "macrophages_combined", 
+                    "Dendritic.cells.resting", 
+                    "Dendritic.cells.activated", 
+                    "Mast.cells.resting", 
+                    "Mast.cells.activated", 
+                    "Eosinophils", 
+                    "Neutrophils")){
+    p <- ggboxplot(df_fardeep,
           x = "response_type", y = cell_type,  
           add = "dotplot", add.params = list(size = 0.5)) +
     stat_compare_means(comparisons = my_comparisons, method = "t.test") +
     ylab("Percent cells") + 
    ggtitle(paste0(cell_type, ", relative"))
-
-```
-
-```{r}
-library(ggpubr)
-cell_type <- "T.cells.regulatory.Tregs."
-my_comparisons <- list(c("pCR", "no-pCR"))
-ggboxplot(df_fardeep_abs,
+  print(p)
+  
+  pa <- ggboxplot(df_fardeep_abs,
           x = "response_type", y = cell_type,  
           add = "dotplot", add.params = list(size = 0.5)) +
     stat_compare_means(comparisons = my_comparisons, method = "t.test") +
     ylab("TIL scores") + 
    ggtitle(paste0(cell_type, ", absolute"))
-
+  print(pa)
+}
 ```
 
+\newpage
 
-```{r}
-cell_type <- "T.cells.follicular.helper"
-my_comparisons <- list(c("pCR", "no-pCR"))
-ggboxplot(df_fardeep,
-          x = "response_type", y = cell_type,  
-          add = "dotplot", add.params = list(size = 0.5)) +
-    stat_compare_means(comparisons = my_comparisons, method = "t.test") +
-    ylab("Percent cells") + 
-   ggtitle(cell_type)
-
-```
-
-
-                                
-```{r}
-cell_type <- "T.cells.CD8"
-my_comparisons <- list(c("pCR", "no-pCR"))
-ggboxplot(df_fardeep,
-          x = "response_type", y = cell_type,  
-          add = "dotplot", add.params = list(size = 0.5)) +
-    stat_compare_means(comparisons = my_comparisons, method = "t.test") +
-    ylab("Percent cells") + 
-   ggtitle(cell_type)
-
-```
-
-
-```{r}
-cell_type <- "T.cells.CD4.naive"
-my_comparisons <- list(c("pCR", "no-pCR"))
-ggboxplot(df_fardeep,
-          x = "response_type", y = cell_type,  
-          add = "dotplot", add.params = list(size = 0.5)) +
-    stat_compare_means(comparisons = my_comparisons, method = "t.test") +
-    ylab("Percent cells") + 
-   ggtitle(cell_type)
-
-```
-
-
-```{r}
-cell_type <- "T.cells.CD4.memory.resting"
-
-my_comparisons <- list(c("pCR", "no-pCR"))
-ggboxplot(df_fardeep,
-          x = "response_type", y = cell_type,  
-          add = "dotplot", add.params = list(size = 0.5)) +
-    stat_compare_means(comparisons = my_comparisons, method = "t.test") +
-    ylab("Percent cells") + 
-   ggtitle(cell_type)
-
-```
 # R session
 
 ```{r}

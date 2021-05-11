@@ -3,6 +3,8 @@ title: "DE analysis"
 author: "Sergey Naumenko"
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     code_folding: hide
     df_print: paged
@@ -14,8 +16,6 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: yes
-  pdf_document:
-    toc: yes
 ---
 
 # Overview
@@ -1006,6 +1006,71 @@ pheatmap(plotmat,
          main = "Top 50 Up- and Down- regulated genes in date_of: 20180323 vs 20180228",
          fontsize = 20)
 
+```
+
+# Prepare files for GSEA
+```{r, include = FALSE}
+#  prepares an expression profile for GSEA
+#  http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#Expression_Data_Formats
+#  for GSEA it is important to report all genes - genome wide
+#  hopefully cpms are better than logcpms
+counts <- counts[rowSums(counts)>0,]
+result_file <-  paste0("tables/all_samples.4gsea.txt")
+
+counts_gsea <- counts %>% as.data.frame() %>% 
+    rownames_to_column(var = "ensembl_gene_id") %>% 
+    left_join(gene_symbol, by = c("ensembl_gene_id" = "gene_id")) %>% 
+    dplyr::relocate(symbol)
+#%>% 
+#    dplyr::relocate(ensembl_gene_id)
+
+colnames(counts_gsea)[1:2] <- c("NAME", "DESCRIPTION")
+
+d <-duplicated(counts_gsea$NAME)
+o <-  order(rowSums(counts_gsea[,rownames(meta)]),decreasing = T)
+counts_gsea <- counts_gsea[o, ]
+counts_gsea <- counts_gsea[!d, ]
+
+samples_yes <- meta %>% dplyr::filter(response == "pCR") %>% row.names()
+samples_no <- meta %>% dplyr::filter(response == "non-pCR") %>% row.names()
+
+counts_gsea <- counts_gsea[,c("NAME", "DESCRIPTION", samples_yes, samples_no)]
+# gsea now supports ENSEMBL_IDs
+write_tsv(counts_gsea, result_file)
+
+sample_vector <- c(rep("RESPONSE_pCR", length(samples_yes)), rep("RESPONSE_non-pCR", length(samples_no))) 
+sample_str <- paste(sample_vector, collapse = " ")
+
+file_conn <- file("tables/all_samples.4gsea.cls")
+writeLines(c("44 2 1", 
+             "# RESPONSE_pCR RESPONSE_non-pCR",
+             sample_str),
+             file_conn)
+close(file_conn)
+```
+
+
+# GSEA day-wise
+```{r}
+result_file <-  paste0("tables/all_samples.4gsea.day_wise.txt")
+
+samples_post <- meta %>% dplyr::filter(treatment == "post") %>% row.names()
+samples_pre <- meta %>% dplyr::filter(treatment == "pre") %>% row.names()
+
+counts_gsea <- counts_gsea[,c("NAME", "DESCRIPTION", samples_post, samples_pre)]
+# gsea now supports ENSEMBL_IDs
+write_tsv(counts_gsea, result_file)
+
+
+treatment_vector <- c(rep("post", length(samples_post)), rep("pre", length(samples_pre))) 
+treatment_str <- paste(treatment_vector, collapse = " ")
+
+file_conn <- file("tables/all_samples.4gsea.day_wise.cls")
+writeLines(c("44 2 1", 
+             "# post pre",
+             treatment_str),
+             file_conn)
+close(file_conn)
 ```
 
 # R session
