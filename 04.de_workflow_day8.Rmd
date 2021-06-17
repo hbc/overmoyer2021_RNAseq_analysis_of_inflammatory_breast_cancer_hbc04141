@@ -640,6 +640,16 @@ resResponse_tb_vis$symbol <- ifelse((abs(resResponse_tb_vis$log2FoldChange) > 1.
 resResponse_tb_vis$symbol <- ifelse(resResponse_tb_vis$threshold,   
                                     resResponse_tb_vis$symbol, NA) 
 
+#fig4b
+# suggested by Jennifer
+genes_to_show <- c("HLA-DMB", "CCR5", "HLA-E", "LAG3", "ITGB2",
+                  "FCGR3A", "CD8B", "HLA-DPA1", "CD8A", "CD163",
+                  "LY86", "HLA-A", "HLA-DPB1", "CCL5", "LILRB4",
+                  "CD38", "HLA-B", "CD74", "CD274", "FCGR2B")
+
+resResponse_tb_vis$symbol <- ifelse(resResponse_tb_vis$symbol %in% genes_to_show, 
+                                    resResponse_tb_vis$symbol, NA)
+
 fig4b <- ggplot(resResponse_tb_vis,
        aes(log2FoldChange, -log10(padj), label = symbol)) +
   geom_point(aes(colour = threshold)) +

@@ -106,6 +106,10 @@ if (file.exists(fardeep_result)){
     result <- fardeep(LM22, counts_day8)
     
     saveRDS(result, fardeep_result)
+    
+    result$relative.beta %>% as.data.frame() %>% rownames_to_column(var = "sample_id") %>% write_csv("tables/fardeep.relative.beta.csv")
+    result$abs.beta %>% as.data.frame() %>% rownames_to_column(var = "sample_id") %>% write_csv("tables/fardeep.abs.beta.csv")
+    
 
 
   
@@ -211,6 +215,10 @@ df_fardeep_abs_long  %>% ggplot(aes(fill = cell_type,
 ```{r}
 df_fardeep$macrophages_combined <- df_fardeep$Macrophages.M0 + df_fardeep$Macrophages.M1 + df_fardeep$Macrophages.M2
 df_fardeep_abs$macrophages_combined <- df_fardeep_abs$Macrophages.M0 + df_fardeep_abs$Macrophages.M1 + df_fardeep_abs$Macrophages.M2
+
+write_csv(df_fardeep, "tables/df_fardeep.csv") 
+write_csv(df_fardeep_abs, "tables/df_fardeep_abs.csv")
+
 my_comparisons <- list(c("pCR", "no-pCR"))
 for (cell_type in c("B.cells.naive",
                     "B.cells.memory",
