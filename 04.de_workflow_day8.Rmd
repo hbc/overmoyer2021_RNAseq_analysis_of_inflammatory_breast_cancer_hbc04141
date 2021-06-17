@@ -634,11 +634,14 @@ ggplot(d, aes(x = response, y = count)) +
 # Add a column for significant genes
 resResponse_tb_vis <- resResponse_tb %>% mutate(threshold = padj < 0.01)
 
+# don't show labels for lfc < 1.5
 resResponse_tb_vis$symbol <- ifelse((abs(resResponse_tb_vis$log2FoldChange) > 1.5),   
-                                resResponse_tb_vis$symbol, NA) 
+                                resResponse_tb_vis$symbol, "") 
 
+
+# don't show labels for non-significant genes
 resResponse_tb_vis$symbol <- ifelse(resResponse_tb_vis$threshold,   
-                                    resResponse_tb_vis$symbol, NA) 
+                                    resResponse_tb_vis$symbol, "") 
 
 #fig4b
 # suggested by Jennifer
@@ -647,17 +650,18 @@ genes_to_show <- c("HLA-DMB", "CCR5", "HLA-E", "LAG3", "ITGB2",
                   "LY86", "HLA-A", "HLA-DPB1", "CCL5", "LILRB4",
                   "CD38", "HLA-B", "CD74", "CD274", "FCGR2B")
 
-resResponse_tb_vis$symbol <- ifelse(resResponse_tb_vis$symbol %in% genes_to_show, 
-                                    resResponse_tb_vis$symbol, NA)
+resResponse_tb_vis$highlight <- ifelse(resResponse_tb_vis$symbol %in% genes_to_show, 
+                                    "yes", "no")
 
+# a handful of extreme genes are not shown, like PRSS33
 fig4b <- ggplot(resResponse_tb_vis,
        aes(log2FoldChange, -log10(padj), label = symbol)) +
   geom_point(aes(colour = threshold)) +
   ggtitle("Response pCR vs non-pCR") +
   xlab("log2 fold change") + 
   ylab("-log10 adjusted p-value") +
-  scale_x_continuous(limits = c(-10,10)) +
-  scale_y_continuous(limits = c(0, 6))+
+  scale_x_continuous(limits = c(-10, 10)) +
+  scale_y_continuous(limits = c(0, 7)) +
   theme(legend.position = "none",
         plot.title = element_text(size = rel(1.5), hjust = 0.5),
         axis.title = element_text(size = rel(1.25)),
@@ -665,7 +669,49 @@ fig4b <- ggplot(resResponse_tb_vis,
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank()) +
-  geom_text_repel(aes(label = symbol), size = 5)
+  geom_text_repel(aes(label = symbol, 
+                      color = highlight), 
+                  data = subset(resResponse_tb_vis, log2FoldChange > 0),
+                      size = 5, 
+                      min.segment.length = 0,
+                      segment.size = 0.1,
+                      segment.color = "grey50",
+                      direction     = "both",
+                      max.overlaps = Inf,
+                      segment.linetype = 5,
+                      max.iter =  Inf,
+                      hjust = "right",
+                      xlim = c(4, 9),
+                      force = 5,
+                      force_pull = 0
+                  ) +
+  geom_text_repel(aes(label = symbol, 
+                      color = highlight), 
+                  data = subset(resResponse_tb_vis, log2FoldChange < 0),
+                      size = 5, 
+                      min.segment.length = 0,
+                      segment.size = 0.1,
+                      segment.color = "grey50",
+                      direction     = "both",
+                      max.overlaps = Inf,
+                      segment.linetype = 5,
+                      max.iter =  Inf,
+                      hjust = "left",
+                      xlim = c(-9, -4),
+                      force = 5,
+                      force_pull = 0
+                  )
+
+ # nudge_x = 9 - subset(resResponse_tb_vis, log2FoldChange > 0)$log2FoldChange,
+#force_pull = 0, # attraction between label and point
+ #                     force = 0.5 # repulsion between labels
+#point.padding = 1,,
+#                  point.size = NA,
+#                  arrow = arrow(length = unit(0.015, "npc")),
+#                  segment.linetype = 1,
+#                  box.padding = 0.5,
+#                  force_pull = 0,
+#                  force = 1
 
 saveRDS(fig4b, "data/fig4b.RDS")  
 fig4b
