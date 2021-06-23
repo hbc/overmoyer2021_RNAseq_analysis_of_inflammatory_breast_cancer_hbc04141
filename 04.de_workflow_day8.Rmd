@@ -645,13 +645,20 @@ resResponse_tb_vis$symbol <- ifelse(resResponse_tb_vis$threshold,
 
 #fig4b
 # suggested by Jennifer
-genes_to_show <- c("HLA-DMB", "CCR5", "HLA-E", "LAG3", "ITGB2",
-                  "FCGR3A", "CD8B", "HLA-DPA1", "CD8A", "CD163",
-                  "LY86", "HLA-A", "HLA-DPB1", "CCL5", "LILRB4",
-                  "CD38", "HLA-B", "CD74", "CD274", "FCGR2B")
+dont_show <- c("C20orf204", "B4GALNT4", "SMIM34B", "ARHGAP33", 
+               "ATRNL1", "CROCC2", "CEL", "FLG", "KIAA1549L", 
+               "AHRR", "SLC25A27", "CPLX1", "SNX10", "STX11",
+               "FUCA1", "ACP5", "MS4A4A", "GM2A", "TYROBP", "GBP5", 
+               "SASH3", "CTSL", "TFEC", "DNASE2", "IGSF6", "IFI30", "LGALS3",
+               "FCER1G", "VNN2", "SELPLG", "GPX1", "TAGAP", "PRDX1", "SLAMF8",
+               "SSR4", "LST1", "VMO1", "OMD", "PRB2", "TBX21", "LIPA", "COMMD3-BMI1",
+               "SOWAHD", "LGALS2", "SLAMF6", "SH2D1A", "ALDH2", "PTPRCAP")
 
-resResponse_tb_vis$highlight <- ifelse(resResponse_tb_vis$symbol %in% genes_to_show, 
-                                    "yes", "no")
+resResponse_tb_vis[resResponse_tb_vis$symbol %in% dont_show,]$symbol <- ""
+
+# no highlighting
+#resResponse_tb_vis$highlight <- ifelse(resResponse_tb_vis$symbol %in% genes_to_show, 
+#                                    "yes", "no")
 
 # a handful of extreme genes are not shown, like PRSS33
 fig4b <- ggplot(resResponse_tb_vis,
@@ -669,8 +676,7 @@ fig4b <- ggplot(resResponse_tb_vis,
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank()) +
-  geom_text_repel(aes(label = symbol, 
-                      color = highlight), 
+  geom_label_repel(aes(label = symbol), 
                   data = subset(resResponse_tb_vis, log2FoldChange > 0),
                       size = 5, 
                       min.segment.length = 0,
@@ -681,12 +687,11 @@ fig4b <- ggplot(resResponse_tb_vis,
                       segment.linetype = 5,
                       max.iter =  Inf,
                       hjust = "right",
-                      xlim = c(4, 9),
+                      xlim = c(3, 10),
                       force = 5,
                       force_pull = 0
                   ) +
-  geom_text_repel(aes(label = symbol, 
-                      color = highlight), 
+  geom_label_repel(aes(label = symbol), 
                   data = subset(resResponse_tb_vis, log2FoldChange < 0),
                       size = 5, 
                       min.segment.length = 0,
