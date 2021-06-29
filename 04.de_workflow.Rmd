@@ -138,6 +138,17 @@ if (!rebuild_rds & file.exists(txi_file)){
                 countsFromAbundance = "lengthScaledTPM", 
                 ignoreTxVersion = FALSE)
     saveRDS(txi, txi_file)
+    library(R.utils)
+    txi$abundance %>% 
+          as.data.frame() %>% 
+          rownames_to_column(var = "ensembl_gene_id") %>% 
+          write_csv("tables/counts.tpm.csv")
+    gzip("tables/counts.tpm.csv")
+    txi$counts %>% 
+          as.data.frame() %>% 
+          rownames_to_column(var = "ensembl_gene_id") %>% 
+          write_csv("tables/counts.raw.csv")
+    gzip("tables/counts.raw.csv")
 }
 
 # Look at the counts
