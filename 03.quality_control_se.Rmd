@@ -30,7 +30,6 @@ library(DESeq2)
 library(DEGreport)
 library(ggrepel)
 library(pROC)
-library(randomForest)
 #devtools::install_github("sachsmc/plotROC")
 #library(plotROC)
 
@@ -363,6 +362,41 @@ pca_data %>%
 
 \newpage
 
+## Principal component analysis (PCA) - protein coding genes - er
+
+```{r pca_coding_filtered_studyid, fig.width = 20, fig.height = 20}
+raw_counts <- assays(se)[["raw"]] %>% 
+    as_tibble(rownames = "ensembl_gene_id") %>% 
+    dplyr::filter(ensembl_gene_id %in% protein_coding_genes$ensembl_gene_id) %>% 
+    column_to_rownames(var = "ensembl_gene_id") %>% 
+    dplyr::filter(rowSums(.)!=0) %>% 
+    as.matrix()
+
+vst <- vst(raw_counts) 
+
+pca <- degPCA(vst, colData(se), condition = "study_id", name = "sample", data = T)[["plot"]]
+pca_labels <- pca[["labels"]]
+pca_data <- pca[["data"]] %>% as_tibble() %>%
+    dplyr::select(sample, PC1, PC2, study_id)
+
+pca_data$study_id <- as.factor(pca_data$study_id)
+
+pca_data %>% 
+    ggplot(aes(x = PC1, y = PC2, color = study_id, label = study_id)) + 
+    geom_point(size = 5) + 
+    geom_text_repel(size = 10) + 
+    xlab(pca_labels$x) + 
+    ylab(pca_labels$y) +
+    ggtitle(paste0("PCA:", nrow(vst), " genes")) +
+    theme_bw(base_size = 20) +
+    theme(axis.text = element_text(size = 20),
+          axis.title = element_text(size = 20, face="bold"),
+          legend.text = element_text(size = rel(1)))
+
+```
+
+\newpage
+
 # PCA - protein coding genes - PRE/POST - Responce
 
 ## PRE
@@ -410,6 +444,7 @@ fig3b
 #pca_data$PC2
 #pca_data$response
 roc_pre <- roc(pca_data_pre$response, pca_data_pre$PC2, percent = FALSE)
+ci.auc(roc_pre)
 ggroc(roc_pre, 
       colour = "red", linetype = 2, size = 1, legacy.axes = TRUE)+
     theme_minimal() + 
@@ -470,6 +505,7 @@ fig3c
 #pca_data_post$response
 # https://sachsmc.github.io/plotROC/
 roc_post <- roc(pca_data_post$response, pca_data_post$PC2, percent = FALSE)
+ci.auc(roc_post)
 
 fig3d <- pROC::ggroc(list(pre = roc_pre,
            post = roc_post),
@@ -492,6 +528,13 @@ fig3d <- pROC::ggroc(list(pre = roc_pre,
 saveRDS(fig3d, "data/fig3d.RDS")
 fig3d
 
+```
+
+# CI and roc.test
+```{r}
+ci.auc(roc_pre)
+ci.auc(roc_post)
+roc.test(roc_post, roc_pre)
 ```
 
 \newpage

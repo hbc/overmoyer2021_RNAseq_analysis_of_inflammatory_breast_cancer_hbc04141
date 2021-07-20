@@ -399,6 +399,36 @@ pheatmap(rld_cor,
 
 # Response pCR vs non-pCR for Day 8 - see Table13
 ```{r, include = FALSE}
+# return mean counts for a group of sample in a column
+get_counts_for_samples <- function(samples, column_name){
+    tpm_counts <- txi$abundance %>%
+        as.data.frame() %>% 
+        dplyr::select(any_of(samples)) %>% 
+        rowMeans() %>% 
+        as.data.frame() %>% 
+        rownames_to_column(var = "ensembl_gene_id")
+    colnames(tpm_counts) <- c("ensembl_gene_id", "tpm")
+    
+    tpm_counts <- tpm_counts %>% 
+        dplyr::mutate("{column_name}" := round(tpm, 2)) %>% 
+        dplyr::select(-tpm)
+    
+    return(tpm_counts)
+}
+
+# get rid of 
+comb_de_result_table <- function(results){
+    results <- results %>%
+        mutate(baseMean = round(baseMean, 2),
+               log2FoldChange = round(log2FoldChange, 2),
+               lfcSE = round(lfcSE, 2),
+               stat = round(stat, 2),
+               pvalue = format(pvalue, scientific = TRUE, digits = 2),
+               padj = format(padj, scientific = TRUE, digits = 2))
+    return(results)
+}
+
+
 contrast <- c("response", "pCR", "non-pCR")
 resResponse <- results(dds, contrast = contrast, alpha = 0.05)
 length(which(resResponse$padj < 0.05))
@@ -414,10 +444,10 @@ resResponse_tb_significant <- dplyr::filter(resResponse_tb, padj < 0.05)
 
 samples_no <- meta %>% dplyr::filter(response == "non-pCR") %>% row.names() 
 
-counts_no <- txi$abundance %>%
+counts_no <- get_txi$abundance %>%
                 as.data.frame() %>% 
                 dplyr::select(any_of(samples_no)) %>% 
-                rowSums() %>% 
+                rowMeans() %>% 
                 as.data.frame() %>% 
                 rownames_to_column(var = "ensembl_gene_id")
 colnames(counts_no) <- c("ensembl_gene_id", "non-pCR_expression_mean_tpm")
@@ -427,7 +457,7 @@ samples_yes <- meta %>% dplyr::filter(response == "pCR") %>% row.names()
 counts_yes <- txi$abundance %>% 
                 as.data.frame() %>% 
                 dplyr::select(any_of(samples_yes)) %>% 
-                rowSums() %>% 
+                rowMeans() %>% 
                 as.data.frame() %>% 
                 rownames_to_column(var = "ensembl_gene_id")
 

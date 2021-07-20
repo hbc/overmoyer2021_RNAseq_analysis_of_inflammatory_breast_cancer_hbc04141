@@ -3,8 +3,6 @@ title: "DE analysis"
 author: "Sergey Naumenko"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     code_folding: hide
     df_print: paged
@@ -16,6 +14,8 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: yes
+  pdf_document:
+    toc: yes
 ---
 
 # Overview
@@ -27,6 +27,8 @@ output:
 - [HBC materials](https://hbctraining.github.io/DGE_workshop_salmon/lessons/03_DGE_QC_analysis.html)
 - [HBC materials - functional analysis](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html)
 - http://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+- patient data is paired using paired multifactor test: https://support.bioconductor.org/p/62357/#62368
+- https://support.bioconductor.org/p/84241/
 
 ```{r include = FALSE}
 remove_cases_2_19 <- FALSE
@@ -46,6 +48,7 @@ library(knitr)
 library(AnnotationHub)
 library(ensembldb)
 library(ggplotify)
+library(writexl)
 
 ggplot2::theme_set(theme_light(base_size = 14))
 
@@ -59,6 +62,7 @@ opts_chunk[["set"]](
     tidy = FALSE,
     warning = FALSE)
 ```
+
 ```{r include = FALSE}
 # Have a folder called `data`, and copy your Salmon folders here from the cluster. 
 ## List all directories containing data  
@@ -93,29 +97,28 @@ if (file.exists(annotation_file)){
     hsdb <- read_tsv(annotation_file)
     gene_symbol <- read_tsv(gene_symbol_file)
 }else{
+    # Connect to AnnotationHub
+    ah <- AnnotationHub()
+    # Query AnnotationHub
+    hs_ens <- query(ah, c("Homo sapiens", "EnsDb"))
 
-# Connect to AnnotationHub
-ah <- AnnotationHub()
-# Query AnnotationHub
-hs_ens <- query(ah, c("Homo sapiens", "EnsDb"))
+    # Get Ensembl94 - used in bcbio
+    hs_ens <- hs_ens[["AH64923"]]
 
-# Get Ensembl94 - used in bcbio
-hs_ens <- hs_ens[["AH64923"]]
-
-# Extract gene-level information
-txdb <- transcripts(hs_ens,
+    # Extract gene-level information
+    txdb <- transcripts(hs_ens,
                     return.type = "data.frame") %>% 
-  dplyr::select(tx_id, gene_id)  
+    dplyr::select(tx_id, gene_id)  
 
-genedb <- genes(hs_ens, 
-                return.type = "data.frame") %>% 
-  dplyr::select(gene_id, gene_name, symbol)  
+    genedb <- genes(hs_ens, 
+              return.type = "data.frame") %>% 
+    dplyr::select(gene_id, gene_name, symbol)  
 
-gene_symbol <- genedb %>% dplyr::select(gene_id, symbol)
-write_tsv(gene_symbol, gene_symbol_file)
+    gene_symbol <- genedb %>% dplyr::select(gene_id, symbol)
+    write_tsv(gene_symbol, gene_symbol_file)
 
-hsdb <- inner_join(txdb, genedb)
-write.table(hsdb, 
+    hsdb <- inner_join(txdb, genedb)
+    write.table(hsdb, 
             file = annotation_file , 
             sep = "\t", 
             row.names = F, 
@@ -203,11 +206,16 @@ fitting model and testing
 dds_file <- "data/dds.RDS"
 
 meta$treatment <- as.factor(meta$treatment)
+meta$treatment <- relevel(meta$treatment, "pre")
+
 meta$response <- as.factor(meta$response)
 meta$er <- as.factor(meta$er)
 meta$date_of <- as.factor(meta$date_of)
 meta$tumor_percentage <- as.factor(meta$tumor_percentage)
 meta$tumor_percentage_high <- as.factor(meta$tumor_percentage_high)
+meta$tumor_percentage_high <- relevel(meta$tumor_percentage_high, "low")
+meta$study_id <- as.factor(meta$study_id)
+
 
 # not removing them anymore - NA -> No in responsce for 2, 19
 if (remove_cases_2_19){
@@ -217,26 +225,57 @@ if (remove_cases_2_19){
 if(!rebuild_rds & file.exists(dds_file)){
     dds <- readRDS(dds_file)
 }else{
-    dds <- DESeqDataSetFromTximport(txi,
-                                colData = meta, 
-                                design = ~treatment)
+    dds <- DESeqDataSetFromTximport(txi, colData = meta, 
+                                    design = ~treatment)
     
     if (remove_cases_2_19){
          dds <- dds[,!colnames(dds) %in% non_responders]
     }
-    design(dds) <- formula(~treatment + response + er + tumor_percentage_high + date_of)
-    
+    design(dds) <- formula(~ treatment + response + er + tumor_percentage_high + date_of)
+
     # subset protein-coding genes
     pc_genes <- intersect(protein_coding_genes$ensembl_gene_id, row.names(dds))
     dds <- dds[pc_genes,]
     # 100 reads / 44 samples
+    # 17861 genes left
     keep <- rowSums(counts(dds)) >= 100
-    dds <- dds[keep,]
+    dds <- dds[keep, ]
 
     # Run DESeq2
+    #dds <- DESeq(dds, full = mm, betaPrior = F)
     dds <- DESeq(dds)
     saveRDS(dds, dds_file)
 }
+
+# return mean counts for a group of sample in a column
+get_counts_for_samples <- function(samples, column_name){
+    tpm_counts <- txi$abundance %>%
+        as.data.frame() %>% 
+        dplyr::select(any_of(samples)) %>% 
+        rowMeans() %>% 
+        as.data.frame() %>% 
+        rownames_to_column(var = "ensembl_gene_id")
+    colnames(tpm_counts) <- c("ensembl_gene_id", "tpm")
+    
+    tpm_counts <- tpm_counts %>% 
+        dplyr::mutate("{column_name}" := round(tpm, 2)) %>% 
+        dplyr::select(-tpm)
+    
+    return(tpm_counts)
+}
+
+# get rid of excess precision
+comb_de_result_table <- function(results){
+    results <- results %>%
+        mutate(baseMean = round(baseMean, 2),
+               log2FoldChange = round(log2FoldChange, 2),
+               lfcSE = round(lfcSE, 2),
+               stat = round(stat, 2),
+               pvalue = format(pvalue, scientific = TRUE, digits = 2),
+               padj = format(padj, scientific = TRUE, digits = 2))
+    return(results)
+}
+
 ```
 
 \newpage
@@ -294,7 +333,7 @@ degQC(counts, design[["tumor_percentage_high"]], pvalue = res[["pvalue"]])
 \newpage
 # Covariates effect on count data
 ```{r, fig.width = 10, fig.height = 10}
-mdata <- colData(dds) %>%  as.data.frame()  %>% 
+mdata <- colData(dds) %>%  as.data.frame() %>% 
   dplyr::select(treatment, response, er, date_of, tumor_percentage_high)
 resCov <- degCovariates(log2(counts(dds)+0.5), mdata)
 ```
@@ -494,36 +533,24 @@ resTreatment_tb <- resTreatment %>%
   as_tibble() %>% 
   left_join(gene_symbol, by = c("gene" = "gene_id"))
 
-resTreatment_tb_significant <- dplyr::filter(resTreatment_tb, padj < 0.05)
+resTreatment_tb_significant <- dplyr::filter(resTreatment_tb, padj < 0.05) %>% 
+    comb_de_result_table()
 
 samples_pre <- meta %>% dplyr::filter(treatment == "pre") %>% row.names() 
-
-counts_pre <- txi$abundance %>% 
-  as.data.frame() %>% 
-  dplyr::select(one_of(samples_pre)) %>% 
-  rowMeans() %>% 
-  as.data.frame() %>% 
-  rownames_to_column(var = "ensembl_gene_id") 
-  
-colnames(counts_pre) <- c("ensembl_gene_id", "pre_expression_mean_tpm")
+tpm_pre <- get_counts_for_samples(samples_pre, "pre_mean_tpm" )
 
 samples_post <- meta %>% dplyr::filter(treatment == "post") %>% row.names() 
+tpm_post <- get_counts_for_samples(samples_post, "post_mean_tpm")
 
-counts_post <- txi$abundance %>% 
-        as.data.frame() %>% 
-        dplyr::select(one_of(samples_post)) %>%
-        rowMeans() %>% 
-        as.data.frame() %>% 
-        rownames_to_column(var = "ensembl_gene_id")
-colnames(counts_post) <- c("ensembl_gene_id", "post_expression_mean_tpm")
-
-counts_post <- counts_post %>% left_join(counts_pre, by = c("ensembl_gene_id" = "ensembl_gene_id"))
+tpm_counts <- tpm_post %>% 
+              left_join(tpm_pre,
+                        by = c("ensembl_gene_id" = "ensembl_gene_id"))
 
 resTreatment_tb_significant <- resTreatment_tb_significant %>% 
-          left_join(counts_post, by = c("gene" = "ensembl_gene_id"))
+          left_join(tpm_counts, by = c("gene" = "ensembl_gene_id"))
 
-write_csv(resTreatment_tb_significant, 
-          "tables/T3.DE_treatment.csv")
+write_xlsx(list(T3.DE_treatment = resTreatment_tb_significant), 
+          "tables/T3.DE_treatment.xlsx")
 
 # Separate into up and down-regulated gene sets
 sigTreatment_up <- rownames(resTreatment)[which(resTreatment$padj < 0.01 & resTreatment$log2FoldChange > 0)]
@@ -547,36 +574,20 @@ resResponse_tb <- resResponse %>%
 resResponse_tb_significant <- dplyr::filter(resResponse_tb, padj < 0.05)
 
 samples_no <- meta %>% dplyr::filter(response == "non-pCR") %>% row.names() 
-
-counts_no <- txi$abundance %>%
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_no)) %>% 
-                rowSums() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-colnames(counts_no) <- c("ensembl_gene_id", "non-pCR_expression_mean_tpm")
+tpm_no <- get_counts_for_samples(samples_no, "non-pCR_mean_tpm")
 
 samples_yes <- meta %>% dplyr::filter(response == "pCR") %>% row.names() 
+tpm_yes <- get_counts_for_samples(samples_yes, "pCR_mean_tpm")
 
-counts_yes <- txi$abundance %>% 
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_yes)) %>% 
-                rowSums() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-
-colnames(counts_yes) <- c("ensembl_gene_id", "pCR_expression_mean_tpm")
-
-counts_yes <-counts_yes %>% 
-            left_join(counts_no, 
+tpm_counts <- tpm_yes %>% left_join(tpm_no, 
                       by = c("ensembl_gene_id" = "ensembl_gene_id"))
 
 resResponse_tb_significant <- resResponse_tb_significant %>% 
-          left_join(counts_yes, by = c("gene" = "ensembl_gene_id"))
+    left_join(tpm_counts, by = c("gene" = "ensembl_gene_id")) %>% 
+    comb_de_result_table()
 
-
-write_csv(resResponse_tb_significant, 
-          "tables/T4.DE_response.csv")
+write_xlsx(list(T4.DE_response = resResponse_tb_significant), 
+           "tables/T4.DE_response.xlsx")
 
 # Separate into up and down-regulated gene sets
 sigResponse_up <- rownames(resResponse)[which(resResponse$padj < 0.01 & resResponse$log2FoldChange > 0)]
@@ -599,36 +610,22 @@ resER_tb <- resER %>%
 resER_tb_significant <- dplyr::filter(resER_tb, padj < 0.05)
 
 samples_pos <- meta %>% dplyr::filter(er == "Positive") %>% row.names() 
-
-counts_pos <- txi$abundance %>%
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_pos)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-colnames(counts_pos) <- c("ensembl_gene_id", "Positive_expression_mean_tpm")
+tpm_pos <- get_counts_for_samples(samples_pos, "positive_mean_tpm")
 
 samples_neg <- meta %>% dplyr::filter(er == "Negative") %>% row.names() 
+tpm_neg <- get_counts_for_samples(samples_neg, "negative_mean_tpm")
 
-counts_neg <- txi$abundance %>% 
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_neg)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-
-colnames(counts_neg) <- c("ensembl_gene_id", "Negative_expression_mean_tpm")
-
-counts_pos <-counts_pos %>%
-            left_join(counts_neg, 
+tpm_counts <- tpm_pos %>%
+              left_join(tpm_neg, 
                       by = c("ensembl_gene_id" = "ensembl_gene_id"))
 
 resER_tb_significant <- resER_tb_significant %>%
-          left_join(counts_pos, by = c("gene" = "ensembl_gene_id"))
+    left_join(tpm_counts, by = c("gene" = "ensembl_gene_id")) %>% 
+    comb_de_result_table()
 
 
-write_csv(resER_tb_significant,
-          "tables/T5.DE_ER.csv")
+write_xlsx(list(T5.DE_ER = resER_tb_significant),
+          "tables/T5.DE_ER.xlsx")
 
 # Separate into up and down-regulated gene sets
 sigER_up <- rownames(resER)[which(resER$padj < 0.01 & resER$log2FoldChange > 0)]
@@ -651,36 +648,22 @@ resTP_tb <- resTP %>%
 resTP_tb_significant <- dplyr::filter(resTP_tb, padj < 0.05)
 
 samples_high <- meta %>% dplyr::filter(tumor_percentage_high == "high") %>% row.names() 
-
-counts_high <- txi$abundance %>%
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_high)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-colnames(counts_high) <- c("ensembl_gene_id", "High_expression_mean_tpm")
+tpm_high <- get_counts_for_samples(samples_high, "tumor_high_tpm")
 
 samples_low <- meta %>% dplyr::filter(tumor_percentage_high == "low") %>% row.names() 
+tpm_low <- get_counts_for_samples(samples_low, "tumor_low_tpm")
 
-counts_low <- txi$abundance %>% 
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_low)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-
-colnames(counts_low) <- c("ensembl_gene_id", "Low_expression_mean_tpm")
-
-counts_high <-counts_high %>%
-            left_join(counts_low, 
-                      by = c("ensembl_gene_id" = "ensembl_gene_id"))
+counts_tpm <- tpm_high %>%
+    left_join(tpm_low, 
+              by = c("ensembl_gene_id" = "ensembl_gene_id"))
 
 resTP_tb_significant <- resTP_tb_significant %>%
-          left_join(counts_high, by = c("gene" = "ensembl_gene_id"))
+    left_join(counts_tpm, by = c("gene" = "ensembl_gene_id")) %>% 
+    comb_de_result_table()
 
 
-write_csv(resTP_tb_significant,
-          "tables/T6.DE_tumor_percentage_high.csv")
+write_xlsx(list(T6.DE_tumor_percentage_high = resTP_tb_significant),
+          "tables/T6.DE_tumor_percentage_high.xlsx")
 
 # Separate into up and down-regulated gene sets
 sigTP_up <- rownames(resTP)[which(resTP$padj < 0.01 & resTP$log2FoldChange > 0)]
@@ -704,36 +687,22 @@ resDO_tb <- resDO %>%
 resDO_tb_significant <- dplyr::filter(resDO_tb, padj < 0.05)
 
 samples_23 <- meta %>% dplyr::filter(date_of == "20180323") %>% row.names() 
-
-counts_23 <- txi$abundance %>%
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_23)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-colnames(counts_23) <- c("ensembl_gene_id", "20180323_expression_mean_tpm")
+counts_23 <- get_counts_for_samples(samples_23, "20180323_expression_mean_tpm")
 
 samples_28 <- meta %>% dplyr::filter(date_of == "20180228") %>% row.names() 
+counts_28 <- get_counts_for_samples(samples_28, "20180228_expression_mean_tpm")
 
-counts_28 <- txi$abundance %>% 
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_28)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-
-colnames(counts_28) <- c("ensembl_gene_id", "20180228_expression_mean_tpm")
-
-counts_23 <-counts_23 %>%
-            left_join(counts_28, 
+tpm_counts <- counts_28 %>%
+            left_join(counts_23, 
                       by = c("ensembl_gene_id" = "ensembl_gene_id"))
 
 resDO_tb_significant <- resDO_tb_significant %>%
-          left_join(counts_23, by = c("gene" = "ensembl_gene_id"))
+    left_join(tpm_counts, by = c("gene" = "ensembl_gene_id")) %>% 
+    comb_de_result_table()
 
 
-write_csv(resDO_tb_significant,
-          "tables/T7.DE_date_of.csv")
+write_xlsx(list(T7.DE_date_of = resDO_tb_significant),
+          "tables/T7.DE_date_of.xlsx")
 
 # Separate into up and down-regulated gene sets
 sigDO_up <- rownames(resDO)[which(resDO$padj < 0.01 & resDO$log2FoldChange > 0)]
