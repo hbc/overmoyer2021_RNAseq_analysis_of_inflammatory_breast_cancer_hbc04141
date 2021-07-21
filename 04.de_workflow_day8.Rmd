@@ -48,6 +48,7 @@ library(AnnotationHub)
 library(ensembldb)
 library(org.Hs.eg.db)
 library(clusterProfiler)
+library(writexl)
 
 ggplot2::theme_set(theme_light(base_size = 14))
 
@@ -211,6 +212,7 @@ meta$er <- as.factor(meta$er)
 meta$date_of <- as.factor(meta$date_of)
 meta$tumor_percentage <- as.factor(meta$tumor_percentage)
 meta$tumor_percentage_high <- as.factor(meta$tumor_percentage_high)
+meta$tumor_percentage_high <- relevel(meta$tumor_percentage_high, "low")
 
 
 if (remove_cases_2_19){
@@ -443,36 +445,22 @@ resResponse_tb <- resResponse %>%
 resResponse_tb_significant <- dplyr::filter(resResponse_tb, padj < 0.05)
 
 samples_no <- meta %>% dplyr::filter(response == "non-pCR") %>% row.names() 
-
-counts_no <- get_txi$abundance %>%
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_no)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-colnames(counts_no) <- c("ensembl_gene_id", "non-pCR_expression_mean_tpm")
+tpm_no <- get_counts_for_samples(samples_no, "non-pCR_expression_mean_tpm")
 
 samples_yes <- meta %>% dplyr::filter(response == "pCR") %>% row.names() 
+tpm_yes <- get_counts_for_samples(samples_yes, "pCR_expression_mean_tpm")
 
-counts_yes <- txi$abundance %>% 
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_yes)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-
-colnames(counts_yes) <- c("ensembl_gene_id", "pCR_expression_mean_tpm")
-
-counts_yes <-counts_yes %>% 
-            left_join(counts_no, 
-                      by = c("ensembl_gene_id" = "ensembl_gene_id"))
+tpm_counts <- tpm_yes %>% 
+    left_join(tpm_no, 
+              by = c("ensembl_gene_id" = "ensembl_gene_id"))
 
 resResponse_tb_significant <- resResponse_tb_significant %>% 
-          left_join(counts_yes, by = c("gene" = "ensembl_gene_id"))
+    left_join(tpm_counts, by = c("gene" = "ensembl_gene_id")) %>% 
+    comb_de_result_table()
 
+write_xlsx(list(T13.DE_response_day8 = resResponse_tb_significant), 
+          "tables/T13.DE_response_day8.xlsx")
 
-write_csv(resResponse_tb_significant, 
-          "tables/T13.DE_response_day8.csv")
 
 # Separate into up and down-regulated gene sets
 sigResponse_up <- rownames(resResponse)[which(resResponse$padj < 0.01 & resResponse$log2FoldChange > 0)]
@@ -495,36 +483,22 @@ resER_tb <- resER %>%
 resER_tb_significant <- dplyr::filter(resER_tb, padj < 0.05)
 
 samples_pos <- meta %>% dplyr::filter(er == "Positive") %>% row.names() 
-
-counts_pos <- txi$abundance %>%
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_pos)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-colnames(counts_pos) <- c("ensembl_gene_id", "Positive_expression_mean_tpm")
+tpm_pos <- get_counts_for_samples(samples_pos, "Positive_expression_mean_tpm")
 
 samples_neg <- meta %>% dplyr::filter(er == "Negative") %>% row.names() 
+tpm_neg <- get_counts_for_samples(samples_neg, "Negative_expression_mean_tpm")
 
-counts_neg <- txi$abundance %>% 
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_neg)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-
-colnames(counts_neg) <- c("ensembl_gene_id", "Negative_expression_mean_tpm")
-
-counts_pos <-counts_pos %>%
-            left_join(counts_neg, 
+tpm_counts <- tpm_pos %>%
+            left_join(tpm_neg, 
                       by = c("ensembl_gene_id" = "ensembl_gene_id"))
 
 resER_tb_significant <- resER_tb_significant %>%
-          left_join(counts_pos, by = c("gene" = "ensembl_gene_id"))
+          left_join(tpm_counts, by = c("gene" = "ensembl_gene_id")) %>% 
+    comb_de_result_table()
 
 
-write_csv(resER_tb_significant,
-          "tables/T14.DE_ER.day8.csv")
+write_xlsx(list(T14.DE_ER.day8 = resER_tb_significant),
+          "tables/T14.DE_ER.day8.xlsx")
 
 # Separate into up and down-regulated gene sets
 sigER_up <- rownames(resER)[which(resER$padj < 0.01 & resER$log2FoldChange > 0)]
@@ -547,36 +521,22 @@ resTP_tb <- resTP %>%
 resTP_tb_significant <- dplyr::filter(resTP_tb, padj < 0.05)
 
 samples_high <- meta %>% dplyr::filter(tumor_percentage_high == "high") %>% row.names() 
-
-counts_high <- txi$abundance %>%
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_high)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-colnames(counts_high) <- c("ensembl_gene_id", "High_expression_mean_tpm")
+tpm_high <- get_counts_for_samples(samples_high, "High_mean_tpm")
 
 samples_low <- meta %>% dplyr::filter(tumor_percentage_high == "low") %>% row.names() 
+tpm_low <- get_counts_for_samples(samples_low, "Low_mean_tpm")
 
-counts_low <- txi$abundance %>% 
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_low)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-
-colnames(counts_low) <- c("ensembl_gene_id", "Low_expression_mean_tpm")
-
-counts_high <-counts_high %>%
-            left_join(counts_low, 
+counts_tpm <- tpm_high %>%
+            left_join(tpm_low, 
                       by = c("ensembl_gene_id" = "ensembl_gene_id"))
 
 resTP_tb_significant <- resTP_tb_significant %>%
-          left_join(counts_high, by = c("gene" = "ensembl_gene_id"))
+    left_join(counts_tpm, by = c("gene" = "ensembl_gene_id")) %>% 
+    comb_de_result_table()
 
 
-write_csv(resTP_tb_significant,
-          "tables/T15.DE_tumor_percentage_high.day8.csv")
+write_xlsx(list(T15.DE_tumor_pct_high.day8 = resTP_tb_significant),
+              "tables/T15.DE_tumor_percentage_high.day8.xlsx")
 
 # Separate into up and down-regulated gene sets
 sigTP_up <- rownames(resTP)[which(resTP$padj < 0.01 & resTP$log2FoldChange > 0)]
@@ -600,36 +560,21 @@ resDO_tb <- resDO %>%
 resDO_tb_significant <- dplyr::filter(resDO_tb, padj < 0.05)
 
 samples_23 <- meta %>% dplyr::filter(date_of == "20180323") %>% row.names() 
-
-counts_23 <- txi$abundance %>%
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_23)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-colnames(counts_23) <- c("ensembl_gene_id", "20180323_expression_mean_tpm")
+counts_23 <- get_counts_for_samples(samples_23, "20180323_expression_mean_tpm")
 
 samples_28 <- meta %>% dplyr::filter(date_of == "20180228") %>% row.names() 
+counts_28 <- get_counts_for_samples(samples_28, "20180228_expression_mean_tpm")
 
-counts_28 <- txi$abundance %>% 
-                as.data.frame() %>% 
-                dplyr::select(any_of(samples_28)) %>% 
-                rowMeans() %>% 
-                as.data.frame() %>% 
-                rownames_to_column(var = "ensembl_gene_id")
-
-colnames(counts_28) <- c("ensembl_gene_id", "20180228_expression_mean_tpm")
-
-counts_23 <-counts_23 %>%
-            left_join(counts_28, 
+tpm_counts <- counts_28 %>%
+            left_join(counts_23, 
                       by = c("ensembl_gene_id" = "ensembl_gene_id"))
 
 resDO_tb_significant <- resDO_tb_significant %>%
-          left_join(counts_23, by = c("gene" = "ensembl_gene_id"))
+          left_join(tpm_counts, by = c("gene" = "ensembl_gene_id")) %>% 
+          comb_de_result_table()
 
-
-write_csv(resDO_tb_significant,
-          "tables/T16.DE_date_of.day8.csv")
+write_xlsx(list(T16.DE_date_of.day8 = resDO_tb_significant),
+           "tables/T16.DE_date_of.day8.xlsx")
 
 # Separate into up and down-regulated gene sets
 sigDO_up <- rownames(resDO)[which(resDO$padj < 0.01 & resDO$log2FoldChange > 0)]
