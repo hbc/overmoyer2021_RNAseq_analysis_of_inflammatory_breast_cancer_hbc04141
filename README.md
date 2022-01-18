@@ -1,6 +1,6 @@
-This repository contains quality control, analysis script and supplementary tables for
-Pernas et al 2022. Early on-treatment transcriptional profiling as a tool for improving response prediction in HER2-positive inflammatory breast cancer
-manuscript
+This repository contains quality control, analysis script and supplementary tables for  
+**Pernas et al 2022. Early on-treatment transcriptional profiling as a tool for improving response prediction in HER2-positive inflammatory breast cancer**  
+manuscript.
 
 The location of the raw data files on the O2 cluster:
 /n/data1/cores/bcbio/PIs/beth_overmoyer/overmoyer2021_RNAseq_analysis_of_inflammatory_breast_cancer_hbc04141/data/03_fastq/bovermoyer.tar - downloaded from the cloud.
