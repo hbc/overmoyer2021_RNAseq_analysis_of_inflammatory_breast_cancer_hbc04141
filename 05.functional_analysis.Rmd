@@ -1,8 +1,10 @@
-# Functional analysis = see Table 8, 9, 10, 11
+# Functional analysis
 ```{r}
 # Load library
 library(org.Hs.eg.db)
 library(clusterProfiler)
+
+# first run a DE analysis
 
 ## Create background dataset for hypergeometric testing using all genes tested for significance in the results                 
 bg_genes <- resTreatment_tb$gene

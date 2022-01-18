@@ -31,8 +31,8 @@ output:
 - https://support.bioconductor.org/p/84241/
 
 ```{r include = FALSE}
-remove_cases_2_19 <- FALSE
-rebuild_rds <- FALSE
+remove_cases_2_19 <- TRUE
+rebuild_rds <- TRUE
 
 ## Setup
 ### Bioconductor and CRAN libraries used
@@ -131,7 +131,7 @@ if (file.exists(annotation_file)){
 tx2gene <- hsdb[, c("tx_id", "gene_id")]
 
 # Run tximport
-txi_file <- "data/txi.RDS"
+txi_file <- "data/rds_20cases/txi.RDS"
 if (!rebuild_rds & file.exists(txi_file)){
     txi <- readRDS(txi_file)
 }else{
@@ -203,7 +203,7 @@ fitting model and testing
 *Here we subset protein coding genes*.
 ```{r include = FALSE}
 ## Create DESeq2Dataset object
-dds_file <- "data/dds.RDS"
+dds_file <- "data/rds_20cases/dds.RDS"
 
 meta$treatment <- as.factor(meta$treatment)
 meta$treatment <- relevel(meta$treatment, "pre")
