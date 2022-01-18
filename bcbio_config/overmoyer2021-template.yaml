@@ -1,0 +1,16 @@
+# Template for human RNA-seq using Illumina prepared samples
+---
+details:
+  - analysis: RNA-seq
+    genome_build: hg38
+    algorithm:
+      aligner: star
+      quality_format: standard
+      strandedness: unstranded
+      expression_caller: [salmon, kallisto]
+      tools_on: bcbiornaseq
+      bcbiornaseq:
+        organism: homo sapiens
+        interesting_groups: [treatment, study_id, response, er, tumor_percentage, date_of]
+upload:
+  dir: /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/final

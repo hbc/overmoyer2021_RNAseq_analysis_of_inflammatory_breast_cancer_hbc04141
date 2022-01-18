@@ -1,0 +1,1433 @@
+details:
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3194-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3194-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3194-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Positive
+    response: NA
+    study_id: 2
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3220-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3220-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3220-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Positive
+    response: 'Yes'
+    study_id: 4
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3234-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3234-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3234-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Positive
+    response: 'Yes'
+    study_id: 4
+    treatment: post
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3291-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3291-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3291-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Positive
+    response: 'Yes'
+    study_id: 5
+    treatment: pre
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3292-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3292-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3292-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Positive
+    response: 'Yes'
+    study_id: 5
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3372-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3372-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3372-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Negative
+    response: 'Yes'
+    study_id: 7
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3374-2
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3374-2_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3374-2_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Negative
+    response: 'Yes'
+    study_id: 7
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3424-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3424-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3424-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Positive
+    response: 'No'
+    study_id: 8
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3474-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3474-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3474-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Negative
+    response: 'No'
+    study_id: 9
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3563-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3563-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3563-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Negative
+    response: 'Yes'
+    study_id: 10
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3582-9
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3582-9_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3582-9_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Negative
+    response: 'Yes'
+    study_id: 10
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3644-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3644-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3644-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Negative
+    response: 'No'
+    study_id: 11
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3652-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3652-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3652-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Negative
+    response: 'No'
+    study_id: 11
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3688-2
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3688-2_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3688-2_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Negative
+    response: 'Yes'
+    study_id: 12
+    treatment: pre
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3697-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3697-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3697-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Negative
+    response: 'Yes'
+    study_id: 12
+    treatment: post
+    tumor_percentage: <1
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3713-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3713-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3713-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Negative
+    response: 'Yes'
+    study_id: 13
+    treatment: pre
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3723-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3723-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3723-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Negative
+    response: 'No'
+    study_id: 14
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3728-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3728-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3728-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Negative
+    response: 'No'
+    study_id: 14
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3732-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3732-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3732-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Negative
+    response: 'No'
+    study_id: 15
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3816-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3816-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3816-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Positive
+    response: 'Yes'
+    study_id: 16
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3822-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3822-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3822-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Negative
+    response: 'Yes'
+    study_id: 17
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3825-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3825-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3825-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Positive
+    response: 'Yes'
+    study_id: 16
+    treatment: post
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3837-2
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3837-2_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_3837-2_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Negative
+    response: 'Yes'
+    study_id: 17
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4047-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_4047-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_4047-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Positive
+    response: 'No'
+    study_id: 18
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4056-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_4056-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_4056-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Positive
+    response: 'No'
+    study_id: 18
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3154-2
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_BOT_3154-2_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_BOT_3154-2_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180228
+    er: Positive
+    response: 'Yes'
+    study_id: 1
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3169-2
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_BOT_3169-2_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180228_BOT_3169-2_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180228
+    er: Positive
+    response: 'Yes'
+    study_id: 1
+    treatment: post
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4089-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_4089-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_4089-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180301
+    er: Negative
+    response: NA
+    study_id: 19
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4101-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_4101-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_4101-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180301
+    er: Negative
+    response: NA
+    study_id: 19
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4136-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_4136-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_4136-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180301
+    er: Negative
+    response: 'No'
+    study_id: 20
+    treatment: pre
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4172-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT_4172-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT_4172-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180301
+    er: Positive
+    response: 'No'
+    study_id: 21
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4176-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT_4176-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT_4176-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180301
+    er: Positive
+    response: 'No'
+    study_id: 21
+    treatment: post
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4237-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT4237-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT4237-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180301
+    er: Positive
+    response: 'No'
+    study_id: 22
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4249-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT4249-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT4249-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180301
+    er: Positive
+    response: 'No'
+    study_id: 22
+    treatment: post
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4261-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT_4261-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT_4261-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180301
+    er: Negative
+    response: 'No'
+    study_id: 23
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4295-5
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT_4295-5_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180301_BOT_4295-5_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180301
+    er: Negative
+    response: 'No'
+    study_id: 23
+    treatment: post
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3188-2
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3188-2_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3188-2_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180323
+    er: Positive
+    response: 'No'
+    study_id: 3
+    treatment: pre
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3193-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3193-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3193-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180323
+    er: Positive
+    response: 'No'
+    study_id: 3
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3370-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3370-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3370-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180323
+    er: Negative
+    response: 'Yes'
+    study_id: 6
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3373-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3373-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3373-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180323
+    er: Negative
+    response: 'Yes'
+    study_id: 6
+    treatment: post
+    tumor_percentage: <1
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3404-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3404-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3404-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180323
+    er: Positive
+    response: 'No'
+    study_id: 8
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3477-1
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3477-1_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3477-1_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180323
+    er: Negative
+    response: 'No'
+    study_id: 9
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3715-2
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3715-2_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3715-2_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180323
+    er: Negative
+    response: 'Yes'
+    study_id: 13
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3741-3
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3741-3_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_3741-3_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180323
+    er: Negative
+    response: 'No'
+    study_id: 15
+    treatment: post
+    tumor_percentage: 1-29
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S3190-4
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_BOT_3190-4_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_BOT_3190-4_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: pre
+    date_of: 20180323
+    er: Positive
+    response: NA
+    study_id: 2
+    treatment: pre
+    tumor_percentage: 30-100
+- algorithm:
+    aligner: star
+    bcbiornaseq:
+      interesting_groups:
+      - treatment
+      - study_id
+      - response
+      - er
+      - tumor_percentage
+      - date_of
+      organism: homo sapiens
+    expression_caller:
+    - salmon
+    - kallisto
+    quality_format: standard
+    strandedness: unstranded
+    tools_on: bcbiornaseq
+  analysis: RNA-seq
+  description: S4144-2
+  files:
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_BOT_4144-2_SG5253_R1.fastq.gz
+  - /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021/input/20180323_BOT_4144-2_SG5253_R2.fastq.gz
+  genome_build: hg38
+  metadata:
+    category: post
+    date_of: 20180323
+    er: Negative
+    response: 'No'
+    study_id: 20
+    treatment: post
+    tumor_percentage: <1
+fc_name: overmoyer2021
+resources:
+  star:
+    memory: 6g
+upload:
+  dir: /n/scratch3/groups/hsph/hbc/sn240/overmoyer2021_1node/final
