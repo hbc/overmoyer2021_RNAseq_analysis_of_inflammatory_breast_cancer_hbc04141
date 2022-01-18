@@ -8,7 +8,7 @@ The location of the raw data files on the O2 cluster:
 Scripts:
 - `01.get_data.sh` - download input data from the cloud
 - `02.untar.sh` - unpack the input archive
-- bcbio_config - configuration file for [bcbio-nextgen RNA-seq pipeline](https://bcbio-nextgen.readthedocs.io/en/latest/contents/bulk_rnaseq.html)
+- `bcbio_config` - configuration file for [bcbio-nextgen RNA-seq pipeline](https://bcbio-nextgen.readthedocs.io/en/latest/contents/bulk_rnaseq.html)
 - `03.quality_control_se.Rmd` - quality control script, the report was generated for
 20 cases and for 22 cases (2 cases had samples of low quality - excluded from the analysis).
 pdf and html files are respective compiled reports.
